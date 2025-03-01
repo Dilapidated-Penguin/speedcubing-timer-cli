@@ -1,14 +1,9 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const fs_1 = __importDefault(require("fs"));
-const path_1 = __importDefault(require("path"));
-const DATA_FILE = path_1.default.join(__dirname, '../../data.json');
-const STAT_FILE = path_1.default.join(__dirname, '../../stats.json');
+import fs from 'fs';
+import path from 'path';
+const DATA_FILE = path.join(__dirname, '../../data.json');
+const STAT_FILE = path.join(__dirname, '../../stats.json');
 function loadStats() {
-    if (!fs_1.default.existsSync(STAT_FILE)) {
+    if (!fs.existsSync(STAT_FILE)) {
         return {
             session_data: [],
             pb_time: null,
@@ -17,14 +12,14 @@ function loadStats() {
         };
     }
     else {
-        JSON.parse(fs_1.default.readFileSync(STAT_FILE, 'utf-8'));
+        JSON.parse(fs.readFileSync(STAT_FILE, 'utf-8'));
     }
 }
 function saveStats(data) {
-    fs_1.default.writeFileSync(STAT_FILE, JSON.stringify(data, null, 2));
+    fs.writeFileSync(STAT_FILE, JSON.stringify(data, null, 2));
 }
 function loadData() {
-    if (!fs_1.default.existsSync(DATA_FILE)) {
+    if (!fs.existsSync(DATA_FILE)) {
         let date_now = new Date(Date.now());
         let val = {
             entries: [],
@@ -47,13 +42,13 @@ function loadData() {
             last_accessed_log: date_now
         };
     }
-    return JSON.parse(fs_1.default.readFileSync(DATA_FILE, 'utf-8'));
+    return JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
 }
 function saveData(data) {
-    fs_1.default.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
 }
 function retrieveAverageOver(average_num, date = null) {
-    if (!fs_1.default.existsSync(DATA_FILE)) {
+    if (!fs.existsSync(DATA_FILE)) {
         return null;
     }
     else {
@@ -79,7 +74,7 @@ function Ao12(date = null) {
     return averageOf(12, date, filter);
 }
 function averageOf(average_num, date = null, filter_process) {
-    if (!fs_1.default.existsSync(DATA_FILE)) {
+    if (!fs.existsSync(DATA_FILE)) {
         return null;
     }
     else {

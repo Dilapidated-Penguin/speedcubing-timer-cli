@@ -1,12 +1,11 @@
 const {Command} = require("commander")
 const figlet = require("figlet")
 const chalk = require("chalk")
-import * as Scrambler from 'sr-scrambler'
+import { randomScrambleForEvent } from "cubing/scramble";
 
-//import { cube } from 'sr-scrambler'
-const EVENTS = ['pyraminx','square1','megaminx','skewb']
+const {event_choices,event_list} = require('./events.json')
 
-import { select,number,Separator, input} from '@inquirer/prompts';
+import { select,number, input} from '@inquirer/prompts';
 import {settings, sessionLog, file_data,global_statistics,event_types} from "./util/interfaces"
 
 const fs = require("fs");
@@ -39,26 +38,14 @@ program
                 startSession(normalized_event,options)
             }else{
                 console.log(chalk.red(
-                    `${event} is not a valid event`
+                    `${event} is not a valid/supported event`
                 ));
             }
         }else{
-            let non_cube_events = EVENTS.map((event)=>{
-                return {
-                    name: event,
-                    value: event,
-                }
-            })
-            let cube_choices =  [...Array(8)].map((_, i) => {
-                return {
-                    name: `${i + 1}x${i + 1}`,
-                    value: `${i + 1}`
-                }
-            })
             
             select({
                 message:'Select an event',
-                choices:[...non_cube_events,new Separator('cube'),...cube_choices]
+                choices:event_choices
             })
             .then((event_choice:string)=>{
                 startSession(event_choice,options)
@@ -118,7 +105,7 @@ function updateSetting(current_settings:settings,property:string):void{
 }
 
 function validEvent(event_to_check:string):boolean{
-    return (EVENTS.indexOf(event_to_check) !== -1) || !isNaN(Number(event_to_check))
+    return (event_list.indexOf(event_to_check) !== -1)
 }
 function startSession(event: string,options:any):void{
     console.clear()
@@ -129,30 +116,13 @@ function startSession(event: string,options:any):void{
     const current_settings:settings = settingsUtil.loadSettings()
     //scramble generator
     let scramble: string
-    if(!isNaN(Number(event))){
-        scramble = Scrambler.cube(Number(event),current_settings.scramble_length).toString()
-    }else{
-        if(event !== 'megaminx'){
-            scramble = Scrambler[event](current_settings.scramble_length).toString()
-        }else{
-            scramble = Scrambler[event]().toString()
-        }
-        
-    }
-    /*
-    const scramble_styling = ScrambleStyle(scramble)
-    const output_string = scramble
-        .trim()
-        .split('')
-        .reduce((acc,curr,index)=>{
-            return acc += scramble_styling[index](acc)
-        },'')
-    console.log(output_string)
-    */
-   console.log(chalk.magenta(scramble))
-   console.log(`\n`)
-   console.log(chalk.inverse('Hold the' +chalk.bold('spacebar')+ 'to start the timer!'))
-
+    randomScrambleForEvent(event).then((alg)=>{
+        console.log(chalk.magenta(alg.toString()))
+        console.log(`\n`)
+        console.log(chalk.inverse('Hold the' +chalk.bold('spacebar')+ 'to start the timer!'))  
+    }).catch((err)=>{
+        console.log(chalk.red("and error occured generating the scramble"))
+    })
 }
 
 function ScrambleStyle(scramble:String):((character:string)=>string)[]{

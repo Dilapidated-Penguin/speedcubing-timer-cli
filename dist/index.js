@@ -1,45 +1,9 @@
-"use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-Object.defineProperty(exports, "__esModule", { value: true });
 const { Command } = require("commander");
 const figlet = require("figlet");
 const chalk = require("chalk");
-const Scrambler = __importStar(require("sr-scrambler"));
-const EVENTS = ['pyraminx', 'square1', 'megaminx', 'skewb'];
-//const {inquirer,select} = require("@inquirer/prompts")
-const prompts_1 = require("@inquirer/prompts");
+import { randomScrambleForEvent } from "cubing/scramble";
+const { event_choices, event_list } = require('./events.json');
+import { select, number, input } from '@inquirer/prompts';
 const fs = require("fs");
 const path = require("path");
 const storage = require("./util/storage");
@@ -57,10 +21,6 @@ program
     .option('-f, --focusMode', '')
     .description('Begin a session of practicing this specific event')
     .action((event, options) => {
-    console.clear();
-    const session = Date.now();
-    const current_settings = settingsUtil.loadSettings();
-    let cubeScramble;
     if (event !== undefined) {
         const normalized_event = event
             .toLowerCase()
@@ -69,25 +29,13 @@ program
             startSession(normalized_event, options);
         }
         else {
-            console.log(chalk.red(`${event} is not a valid event`));
+            console.log(chalk.red(`${event} is not a valid/supported event`));
         }
     }
     else {
-        let non_cube_events = EVENTS.map((event) => {
-            return {
-                name: event,
-                value: event,
-            };
-        });
-        let cube_choices = [...Array(8)].map((_, i) => {
-            return {
-                name: `${i + 1}x${i + 1}`,
-                value: `${i + 1}`
-            };
-        });
-        (0, prompts_1.select)({
+        select({
             message: 'Select an event',
-            choices: [...non_cube_events, new prompts_1.Separator('cube'), ...cube_choices]
+            choices: event_choices
         })
             .then((event_choice) => {
             startSession(event_choice, options);
@@ -95,10 +43,7 @@ program
             console.log(chalk.bgRed(`An error occurred`));
         });
     }
-    cubeScramble = Scrambler.cube(Number(event), current_settings.scramble_length).toString();
-    console.log(figlet.textSync('session:'));
-    console.log(figlet.textSync(`${session}`));
-    //console.log(figlet.textSync)
+    //cubeScramble = cube(Number(event), current_settings.scramble_length).toString()
 });
 program
     .Commmand("settings")
@@ -107,7 +52,7 @@ program
     let current_settings = settingsUtil.loadSettings();
     const settings_list = Object.keys(current_settings);
     if (setting_to_change === undefined) {
-        (0, prompts_1.select)({
+        select({
             message: "Select the setting you'd like to alter",
             choices: settings_list
         }).then((answer) => {
@@ -132,7 +77,7 @@ if (options.settings) {
         + chalk.italic('to change any of the above'));
 }
 function updateSetting(current_settings, property) {
-    const prompt = (typeof current_settings[property] === 'number') ? prompts_1.number : prompts_1.input;
+    const prompt = (typeof current_settings[property] === 'number') ? number : input;
     prompt({
         message: `Enter new value for ${current_settings[property]}`
     }).then((new_value) => {
@@ -143,8 +88,43 @@ function updateSetting(current_settings, property) {
     });
 }
 function validEvent(event_to_check) {
-    return (EVENTS.indexOf(event_to_check) !== -1) || !isNaN(Number(event_to_check));
+    return (event_list.indexOf(event_to_check) !== -1);
 }
 function startSession(event, options) {
+    console.clear();
+    const session_date = Date.now();
+    console.log(figlet.textSync('session:'));
+    console.log(figlet.textSync(`${session_date}`));
+    const current_settings = settingsUtil.loadSettings();
+    //scramble generator
+    let scramble;
+    randomScrambleForEvent(event).then((alg) => {
+        console.log(chalk.magenta(alg.toString()));
+        console.log(`\n`);
+        console.log(chalk.inverse('Hold the' + chalk.bold('spacebar') + 'to start the timer!'));
+    }).catch((err) => {
+        console.log(chalk.red("and error occured generating the scramble"));
+    });
+}
+function ScrambleStyle(scramble) {
+    return scramble
+        .trim()
+        .split('')
+        .map((char) => {
+        switch (char) {
+            case 'r':
+                return chalk.redBright;
+            case 'l':
+                return chalk.blueBright;
+            case 'u':
+                return chalk.cyanBright;
+            case 'd':
+                return chalk.greenBright;
+            case `'`:
+                return chalk.whiteBright;
+            default:
+                return chalk.magenta;
+        }
+    });
 }
 //# sourceMappingURL=index.js.map
