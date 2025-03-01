@@ -1,10 +1,9 @@
 import fs from 'fs';
 import path from 'path';
+import {settings} from "./interfaces"
 
 const SETTINGS_FILE = path.join(__dirname,"../settings.json")
-interface settings {
-    scramble_length: number
-}
+
 function saveSettings(data:settings):void {
     fs.writeFileSync(SETTINGS_FILE, JSON.stringify( data , null, 2));
 }

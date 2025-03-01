@@ -4,37 +4,10 @@ import { time } from 'console';
 import fs from 'fs';
 import path from 'path';
 
+import {sessionLog, file_data,global_statistics} from "./interfaces"
+
 const DATA_FILE = path.join(__dirname, '../../data.json');
 const STAT_FILE = path.join(__dirname,'../../stats.json')
-
-interface SolveInstance {
-    time: Date;
-    scramble: string;
-    format: string;
-}
-interface sessionLog {
-    entries: SolveInstance[];
-    date: Date;
-    date_formatted : string;
-}
-interface file_data {
-    data: Map<Date,sessionLog>;
-    last_accessed_log: Date;
-}
-//######################
-interface session_statistics {
-    solve_mean:number;
-    standard_deviation: number;
-    fastest_solve: number;
-    slowest_solve: number;
-}
-
-interface global_statistics {
-    session_data:session_statistics[];
-    pb_time: number | null;
-    pb_Ao5:number | null;
-    pb_Ao12:number | null;
-}
 
 function loadStats():global_statistics{
     if(!fs.existsSync(STAT_FILE)){

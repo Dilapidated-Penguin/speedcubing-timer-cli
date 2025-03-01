@@ -7,7 +7,6 @@ const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const DATA_FILE = path_1.default.join(__dirname, '../../data.json');
 const STAT_FILE = path_1.default.join(__dirname, '../../stats.json');
-const SETTINGS_FILE = path_1.default.join(__dirname, "../settings.json");
 function loadStats() {
     if (!fs_1.default.existsSync(STAT_FILE)) {
         return {
