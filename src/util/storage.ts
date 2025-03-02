@@ -1,6 +1,3 @@
-import { makeTheme } from '@inquirer/core';
-import { time } from 'console';
-
 import fs from 'fs';
 import path from 'path';
 
@@ -9,7 +6,7 @@ import {sessionLog, file_data,global_statistics} from "./interfaces"
 const DATA_FILE = path.join(__dirname, '../../data.json');
 const STAT_FILE = path.join(__dirname,'../../stats.json')
 
-function loadStats():global_statistics{
+export function loadStats():global_statistics{
     if(!fs.existsSync(STAT_FILE)){
         return {
             session_data: [],
@@ -18,13 +15,13 @@ function loadStats():global_statistics{
             pb_Ao12:null
         }
     }else{
-        JSON.parse(fs.readFileSync(STAT_FILE, 'utf-8'));
+        return JSON.parse(fs.readFileSync(STAT_FILE, 'utf-8'));
     }
 }
-function saveStats(data:global_statistics):void {
-    fs.writeFileSync(STAT_FILE, JSON.stringify( data , null, 2));
+export function saveStats(data:global_statistics):void {
+    fs.writeFileSync(STAT_FILE, JSON.stringify( data , null, 2))
 }
-function loadData(): file_data {
+export function loadData(): file_data {
   if (!fs.existsSync(DATA_FILE)) {
     let date_now:Date = new Date(Date.now())
     let val:sessionLog = { 
@@ -53,11 +50,11 @@ function loadData(): file_data {
   return JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
 }
 
-function saveData(data: file_data): void {
+export function saveData(data: file_data): void {
   fs.writeFileSync(DATA_FILE, JSON.stringify( data , null, 2));
 }
 
-function retrieveAverageOver(average_num:number, date:Date|null = null):number {
+export function retrieveAverageOver(average_num:number, date:Date|null = null):number {
     if(!fs.existsSync(DATA_FILE)){
         return null
     }else{
@@ -75,18 +72,18 @@ function retrieveAverageOver(average_num:number, date:Date|null = null):number {
     }
 }
 
-function Ao5(date:Date = null):number{
+export function Ao5(date:Date = null):number{
     return averageOf(5,date,remove_extremes)
 }
 
-function Ao12(date:Date|null = null):number{
+export function Ao12(date:Date|null = null):number{
     const filter = (arr)=>{
         return remove_extremes(remove_extremes(arr))
     }
     return averageOf(12,date,filter)
 }
 
-function averageOf(average_num:number, date:Date|null = null,filter_process:any):number {
+export function averageOf(average_num:number, date:Date|null = null,filter_process:any):number {
     if(!fs.existsSync(DATA_FILE)){
         return null
     }else{
@@ -105,16 +102,7 @@ function averageOf(average_num:number, date:Date|null = null,filter_process:any)
         },0)/average_num
     }
 }
-function remove_extremes(arr: number[]): number[]{
+export function remove_extremes(arr: number[]): number[]{
     const extremes_to_remove = [Math.max(...arr),Math.min(...arr)]
     return arr.filter((val)=>(extremes_to_remove.indexOf(val) === -1))
-}
-
-module.exports = {
-    saveData,
-    saveStats,
-    loadStats,
-    loadData,
-    Ao5,
-    Ao12,
 }

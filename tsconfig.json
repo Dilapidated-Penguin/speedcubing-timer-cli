@@ -5,10 +5,11 @@
       "strict": false,
       "target": "es6",
       "module": "es2022",
+      "resolveJsonModule": true,
       "sourceMap": true,
       "esModuleInterop": true,
       "moduleResolution": "node"
     },
-    "include": ["src"],
+    "include": ["src", "src/util/settings.ts","src/util/storage.ts","src/util/interfaces.ts","src/events.json"],
     "exclude": ["node_modules", "dist"]
   }

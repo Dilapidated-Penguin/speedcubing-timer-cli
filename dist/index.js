@@ -1,13 +1,13 @@
-const { Command } = require("commander");
-const figlet = require("figlet");
-const chalk = require("chalk");
+//const {Command} = require("commander")
+//const figlet = require("figlet")
+//const chalk = require("chalk")
+import figlet from "figlet";
+import chalk from "chalk";
+import { Command } from "commander";
 import { randomScrambleForEvent } from "cubing/scramble";
-const { event_choices, event_list } = require('./events.json');
+import { event_choices, events_list } from './events.json';
 import { select, number, input } from '@inquirer/prompts';
-const fs = require("fs");
-const path = require("path");
-const storage = require("./util/storage");
-const settingsUtil = require("./util/settings");
+import * as settingsUtil from "./util/settings";
 const program = new Command();
 console.log(figlet.textSync("cli timer"));
 program
@@ -16,7 +16,7 @@ program
     .option("-s, --settings", "Displays the current global settings for the cli timer")
     .parse(process.argv);
 program
-    .Command('startsession')
+    .command('startsession')
     .argument('[event]', 'the event you wish to practice', '3')
     .option('-f, --focusMode', '')
     .description('Begin a session of practicing this specific event')
@@ -46,7 +46,7 @@ program
     //cubeScramble = cube(Number(event), current_settings.scramble_length).toString()
 });
 program
-    .Commmand("settings")
+    .command("settings")
     .argument("[property]", "configure the cli to your liking")
     .action((setting_to_change) => {
     let current_settings = settingsUtil.loadSettings();
@@ -88,7 +88,7 @@ function updateSetting(current_settings, property) {
     });
 }
 function validEvent(event_to_check) {
-    return (event_list.indexOf(event_to_check) !== -1);
+    return (events_list.indexOf(event_to_check) !== -1);
 }
 function startSession(event, options) {
     console.clear();

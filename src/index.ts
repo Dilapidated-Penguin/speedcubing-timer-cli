@@ -1,19 +1,27 @@
-const {Command} = require("commander")
-const figlet = require("figlet")
-const chalk = require("chalk")
+//const {Command} = require("commander")
+//const figlet = require("figlet")
+//const chalk = require("chalk")
+import figlet from "figlet";
+import chalk from "chalk";
+import { Command } from "commander";
+
 import { randomScrambleForEvent } from "cubing/scramble";
 
-const {event_choices,event_list} = require('./events.json')
-
+import {event_choices,events_list} from './events.json'
+ 
 import { select,number, input} from '@inquirer/prompts';
 import {settings, sessionLog, file_data,global_statistics,event_types} from "./util/interfaces"
 
-const fs = require("fs");
-const path = require("path");
+//const fs = require("fs");
+//const path = require("path");
+import fs from 'fs'
+import path from 'path'
 
-const storage = require("./util/storage")
-const settingsUtil = require("./util/settings")
 
+//const storage = require("./util/storage")
+//const settingsUtil = require("./util/settings")
+import * as storage from "./util/storage"
+import  * as settingsUtil from "./util/settings"
 
 const program = new Command();
 
@@ -25,7 +33,7 @@ program
     .parse(process.argv)
 
 program
-    .Command('startsession')
+    .command('startsession')
     .argument('[event]', 'the event you wish to practice','3')
     .option('-f, --focusMode','')
     .description('Begin a session of practicing this specific event')
@@ -57,7 +65,7 @@ program
     })
 
 program
-    .Commmand("settings")
+    .command("settings")
     .argument("[property]","configure the cli to your liking")
     .action((setting_to_change:string | undefined)=>{
         let current_settings:settings = settingsUtil.loadSettings()
@@ -105,7 +113,7 @@ function updateSetting(current_settings:settings,property:string):void{
 }
 
 function validEvent(event_to_check:string):boolean{
-    return (event_list.indexOf(event_to_check) !== -1)
+    return (events_list.indexOf(event_to_check) !== -1)
 }
 function startSession(event: string,options:any):void{
     console.clear()

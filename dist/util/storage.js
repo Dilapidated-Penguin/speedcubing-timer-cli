@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 const DATA_FILE = path.join(__dirname, '../../data.json');
 const STAT_FILE = path.join(__dirname, '../../stats.json');
-function loadStats() {
+export function loadStats() {
     if (!fs.existsSync(STAT_FILE)) {
         return {
             session_data: [],
@@ -12,13 +12,13 @@ function loadStats() {
         };
     }
     else {
-        JSON.parse(fs.readFileSync(STAT_FILE, 'utf-8'));
+        return JSON.parse(fs.readFileSync(STAT_FILE, 'utf-8'));
     }
 }
-function saveStats(data) {
+export function saveStats(data) {
     fs.writeFileSync(STAT_FILE, JSON.stringify(data, null, 2));
 }
-function loadData() {
+export function loadData() {
     if (!fs.existsSync(DATA_FILE)) {
         let date_now = new Date(Date.now());
         let val = {
@@ -44,10 +44,10 @@ function loadData() {
     }
     return JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
 }
-function saveData(data) {
+export function saveData(data) {
     fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
 }
-function retrieveAverageOver(average_num, date = null) {
+export function retrieveAverageOver(average_num, date = null) {
     if (!fs.existsSync(DATA_FILE)) {
         return null;
     }
@@ -64,16 +64,16 @@ function retrieveAverageOver(average_num, date = null) {
         }, 0) / average_num;
     }
 }
-function Ao5(date = null) {
+export function Ao5(date = null) {
     return averageOf(5, date, remove_extremes);
 }
-function Ao12(date = null) {
+export function Ao12(date = null) {
     const filter = (arr) => {
         return remove_extremes(remove_extremes(arr));
     };
     return averageOf(12, date, filter);
 }
-function averageOf(average_num, date = null, filter_process) {
+export function averageOf(average_num, date = null, filter_process) {
     if (!fs.existsSync(DATA_FILE)) {
         return null;
     }
@@ -91,16 +91,8 @@ function averageOf(average_num, date = null, filter_process) {
         }, 0) / average_num;
     }
 }
-function remove_extremes(arr) {
+export function remove_extremes(arr) {
     const extremes_to_remove = [Math.max(...arr), Math.min(...arr)];
     return arr.filter((val) => (extremes_to_remove.indexOf(val) === -1));
 }
-module.exports = {
-    saveData,
-    saveStats,
-    loadStats,
-    loadData,
-    Ao5,
-    Ao12,
-};
 //# sourceMappingURL=storage.js.map

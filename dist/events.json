@@ -1,0 +1,14 @@
+{
+    "events_list": ["333", "333bf", "333fm", "222", "444", "777", "sq1", "minx", "clock"],
+    "event_choices": [
+        { "name": "3x3", "value": "333" },
+        { "name": "3x3 blindfold", "value": "333bf" },
+        { "name": "3x3 fewest moves", "value": "333fm" },
+        { "name": "2x2", "value": "222" },
+        { "name": "4x4", "value": "444" },
+        { "name": "7x7", "value": "777" },
+        { "name": "Square 1", "value": "sq1" },
+        { "name": "Megaminx", "value": "minx" },
+        { "name": "Clock", "value": "clock" }
+    ]
+}
