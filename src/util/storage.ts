@@ -21,22 +21,26 @@ export function loadStats():global_statistics{
 export function saveStats(data:global_statistics):void {
     fs.writeFileSync(STAT_FILE, JSON.stringify( data , null, 2))
 }
-export function loadData(): file_data {
-  if (!fs.existsSync(DATA_FILE)) {
-    let date_now:Date = new Date(Date.now())
-    let val:sessionLog = { 
+export function newSessionLog(session_date:Date):sessionLog{
+    return {
         entries: [],
-        date: date_now,
-        date_formatted: `${date_now.getFullYear()}-${(date_now.getMonth() + 1)
+        date: session_date,
+        date_formatted:`${session_date.getFullYear()}-${(session_date.getMonth() + 1)
             .toString()
-            .padStart(2, "0")}-${date_now.getDate().toString().padStart(2, "0")} ${date_now
+            .padStart(2, "0")}-${session_date.getDate().toString().padStart(2, "0")} ${session_date
             .getHours()
             .toString()
-            .padStart(2, "0")}:${date_now.getMinutes().toString().padStart(2, "0")}:${date_now
+            .padStart(2, "0")}:${session_date.getMinutes().toString().padStart(2, "0")}:${session_date
             .getSeconds()
             .toString()
             .padStart(2, "0")}`
-    };
+    }
+}
+
+export function loadData(): file_data {
+  if (!fs.existsSync(DATA_FILE)) {
+    let date_now:Date = new Date(Date.now())
+    let val:sessionLog = newSessionLog(date_now);
 
     var Storage = new Map<Date,sessionLog>([
         [date_now,val]

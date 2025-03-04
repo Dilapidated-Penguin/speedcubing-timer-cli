@@ -2,10 +2,8 @@
 //const figlet = require("figlet")
 //const chalk = require("chalk")
 import figlet from "figlet";
-import chalk from "chalk";
+import chalk, { ChalkInstance } from "chalk";
 import { Command } from "commander";
-
-import { randomScrambleForEvent } from "cubing/scramble";
 
 import {event_choices,events_list} from './events.json'
  
@@ -22,22 +20,44 @@ import path from 'path'
 //const settingsUtil = require("./util/settings")
 import * as storage from "./util/storage"
 import  * as settingsUtil from "./util/settings"
+import { start } from "repl";
+
+var Scrambow = require('scrambow').Scrambow;
 
 const program = new Command();
+
+var saved_data = storage.loadData()
+
+var keypress = require('keypress');
+
+
+//timer variables**********************************
+const readline = require("node:readline");
+
+readline.emitKeypressEvents(process.stdin);
+process.stdin.setRawMode(true);
+
+let timer_running:boolean = false
+let space_been_pressed:boolean = false
+let startTime:[number,number] | null = null
+
+let keysPressed = new Set();
+//*************************************************
+
 
 console.log(figlet.textSync("cli timer"))
 program
     .version("1.0.0")
     .description("fast and lightweight CLI timer for speedcubing. Track your solves, get random scrambles, and analyze your times")
     .option("-s, --settings","Displays the current global settings for the cli timer")
-    .parse(process.argv)
 
 program
     .command('startsession')
-    .argument('[event]', 'the event you wish to practice','3')
+    .argument('[event]', 'the event you wish to practice','333')
     .option('-f, --focusMode','')
     .description('Begin a session of practicing this specific event')
     .action((event:string,options:any)=>{
+        console.log(event)
         if(event !== undefined){
             const normalized_event = event
                 .toLowerCase()
@@ -88,27 +108,30 @@ program
 
     })
 
+
+program.parse(process.argv)
 const options = program.opts();
 
 if(options.settings){
     
     console.table(settingsUtil.loadSettings())
     console.log(chalk.italic('Use')
-    + chalk.green('cubetimer ')
-    + chalk.cyan('settings')
+    + chalk.green(' cubetimer ')
+    + chalk.cyan('settings ')
     + chalk.italic('to change any of the above'))
 }
 
 function updateSetting(current_settings:settings,property:string):void{
     const prompt = (typeof current_settings[property] === 'number') ? number : input
     prompt({
-        message: `Enter new value for ${current_settings[property]}`
+        message: `Enter new value for ${property}`,
+        default: `${current_settings[property]}` as never
     }).then((new_value:number|string)=>{
         current_settings[property] = new_value
         settingsUtil.saveSettings(current_settings)
 
         console.log(chalk.green('settings updated!'))
-        console.table(settingsUtil)
+        console.table(current_settings)
     })
 }
 
@@ -117,40 +140,65 @@ function validEvent(event_to_check:string):boolean{
 }
 function startSession(event: string,options:any):void{
     console.clear()
-    const session_date = Date.now()
+    const session = Date.now()
+    const session_date = new Date(session)
+
     console.log(figlet.textSync('session:'))
-    console.log(figlet.textSync(`${session_date}`))
+    console.log(figlet.textSync(`${session}`))
 
     const current_settings:settings = settingsUtil.loadSettings()
-    //scramble generator
-    let scramble: string
-    randomScrambleForEvent(event).then((alg)=>{
-        console.log(chalk.magenta(alg.toString()))
-        console.log(`\n`)
-        console.log(chalk.inverse('Hold the' +chalk.bold('spacebar')+ 'to start the timer!'))  
-    }).catch((err)=>{
-        console.log(chalk.red("and error occured generating the scramble"))
-    })
-}
+    //saved_data.data.set(new Date(session_date)
 
-function ScrambleStyle(scramble:String):((character:string)=>string)[]{
+    saved_data.data.set(session_date,storage.newSessionLog(session_date))
+    newSolve(current_settings,event,session_date,options)
+}
+function newSolve(current_settings:settings,event: string,session_date:Date,option:any):void{
+    var scramble_generator = new Scrambow()
+
+    let scramble: string = scramble_generator
+        .setType(event)
+        .setLength(current_settings.scramble_length)
+        .get(1)[0]
+        .scramble_string
+
+    console.log(stylizeScramble(scramble))
+
+}
+function stopTimer():void{
+    if (!startTime) return;
+
+    timer_running = false
+    const endTime = process.hrtime(startTime)
+    const elapsedTime = endTime[0] + endTime[1] / 1e9;
+    console.log( chalk.bold(`Time: `) +  elapsedTime.toFixed(4) + chalk.green('s'));
+}
+function startTimer():void{
+    startTime = process.hrtime()
+    timer_running = true
+}
+function stylizeScramble(scramble:string):string{
     return scramble
-        .trim()
-        .split('')
-        .map((char:string)=>{
-            switch(char){
-                case 'r':
-                    return chalk.redBright
-                case 'l':
-                    return chalk.blueBright
-                case 'u':
-                    return chalk.cyanBright
-                case 'd':
-                    return chalk.greenBright
-                case `'`:
-                    return chalk.whiteBright
-                default:
-                    return chalk.magenta
-            }
-        })
+    .trim()
+    .split('')
+    .reduce((acc,curr)=>{
+        switch(curr){
+            case 'r':
+                return acc += chalk.redBright(curr)
+            case 'l':
+                return acc += chalk.blueBright(curr)
+            case 'u':
+                return acc += chalk.cyanBright(curr)
+            case 'd':
+                return acc += chalk.greenBright(curr)
+            case `'`:
+                return acc += chalk.whiteBright(curr)
+            case '2':
+                return acc += chalk.cyan(curr)
+            case 'F':
+                return acc += chalk.magenta.underline(curr)
+            default:
+                return acc += chalk.magenta(curr)
+        }  
+        
+    },'')
 }

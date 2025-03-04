@@ -4,7 +4,7 @@
       "outDir": "dist",
       "strict": false,
       "target": "es6",
-      "module": "es2022",
+      "module": "commonjs",
       "resolveJsonModule": true,
       "sourceMap": true,
       "esModuleInterop": true,

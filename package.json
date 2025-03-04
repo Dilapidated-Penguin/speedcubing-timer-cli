@@ -16,14 +16,14 @@
   ],
   "author": "Makapane Khoza",
   "license": "MIT",
-  "type": "module",
+  "type": "commonjs",
   "dependencies": {
     "@inquirer/prompts": "^7.3.2",
     "chalk": "^5.4.1",
     "commander": "^13.1.0",
-    "cubing": "^0.54.3",
     "figlet": "^1.8.0",
-    "keypress": "^0.2.1"
+    "keypress": "^0.2.1",
+    "scrambow": "^1.8.1"
   },
   "devDependencies": {
     "@types/node": "^22.13.5",

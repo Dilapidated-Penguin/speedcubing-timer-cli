@@ -1,9 +1,23 @@
-import fs from 'fs';
-import path from 'path';
-const DATA_FILE = path.join(__dirname, '../../data.json');
-const STAT_FILE = path.join(__dirname, '../../stats.json');
-export function loadStats() {
-    if (!fs.existsSync(STAT_FILE)) {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.loadStats = loadStats;
+exports.saveStats = saveStats;
+exports.loadData = loadData;
+exports.saveData = saveData;
+exports.retrieveAverageOver = retrieveAverageOver;
+exports.Ao5 = Ao5;
+exports.Ao12 = Ao12;
+exports.averageOf = averageOf;
+exports.remove_extremes = remove_extremes;
+const fs_1 = __importDefault(require("fs"));
+const path_1 = __importDefault(require("path"));
+const DATA_FILE = path_1.default.join(__dirname, '../../data.json');
+const STAT_FILE = path_1.default.join(__dirname, '../../stats.json');
+function loadStats() {
+    if (!fs_1.default.existsSync(STAT_FILE)) {
         return {
             session_data: [],
             pb_time: null,
@@ -12,14 +26,14 @@ export function loadStats() {
         };
     }
     else {
-        return JSON.parse(fs.readFileSync(STAT_FILE, 'utf-8'));
+        return JSON.parse(fs_1.default.readFileSync(STAT_FILE, 'utf-8'));
     }
 }
-export function saveStats(data) {
-    fs.writeFileSync(STAT_FILE, JSON.stringify(data, null, 2));
+function saveStats(data) {
+    fs_1.default.writeFileSync(STAT_FILE, JSON.stringify(data, null, 2));
 }
-export function loadData() {
-    if (!fs.existsSync(DATA_FILE)) {
+function loadData() {
+    if (!fs_1.default.existsSync(DATA_FILE)) {
         let date_now = new Date(Date.now());
         let val = {
             entries: [],
@@ -42,13 +56,13 @@ export function loadData() {
             last_accessed_log: date_now
         };
     }
-    return JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
+    return JSON.parse(fs_1.default.readFileSync(DATA_FILE, 'utf-8'));
 }
-export function saveData(data) {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+function saveData(data) {
+    fs_1.default.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
 }
-export function retrieveAverageOver(average_num, date = null) {
-    if (!fs.existsSync(DATA_FILE)) {
+function retrieveAverageOver(average_num, date = null) {
+    if (!fs_1.default.existsSync(DATA_FILE)) {
         return null;
     }
     else {
@@ -64,17 +78,17 @@ export function retrieveAverageOver(average_num, date = null) {
         }, 0) / average_num;
     }
 }
-export function Ao5(date = null) {
+function Ao5(date = null) {
     return averageOf(5, date, remove_extremes);
 }
-export function Ao12(date = null) {
+function Ao12(date = null) {
     const filter = (arr) => {
         return remove_extremes(remove_extremes(arr));
     };
     return averageOf(12, date, filter);
 }
-export function averageOf(average_num, date = null, filter_process) {
-    if (!fs.existsSync(DATA_FILE)) {
+function averageOf(average_num, date = null, filter_process) {
+    if (!fs_1.default.existsSync(DATA_FILE)) {
         return null;
     }
     else {
@@ -91,7 +105,7 @@ export function averageOf(average_num, date = null, filter_process) {
         }, 0) / average_num;
     }
 }
-export function remove_extremes(arr) {
+function remove_extremes(arr) {
     const extremes_to_remove = [Math.max(...arr), Math.min(...arr)];
     return arr.filter((val) => (extremes_to_remove.indexOf(val) === -1));
 }
