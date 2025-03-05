@@ -203,9 +203,29 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                     console.log( chalk.bold(`session average: `) + chalk.magenta(session_average) + chalk.green(`s`))
                     
                     
-                    console.log(chalk.bold(`Ao5: `) + + chalk.magenta(storage.Ao5(session_date)) + chalk.green(`s`))
-                    console.log(chalk.bold(`Ao12: `) + + chalk.magenta(storage.Ao12(session_date)) + chalk.green(`s`))
-
+                    console.log(chalk.bold(`Ao5: `)+ chalk.magenta(storage.Ao5(session_date) ?? "--") + chalk.green(`s`))
+                    console.log(chalk.bold(`Ao12: `)+ chalk.magenta(storage.Ao12(session_date)?? "--") + chalk.green(`s`))
+                    const worst_time:number = current_session
+                        .entries
+                        .reduce((acc,curr)=>{
+                            if(acc>curr.time){
+                                return acc
+                            }else{
+                                return curr.time
+                            }
+                        },-Infinity)
+                    console.log(chalk.bold(`Worst session time: `)+ chalk.magenta(worst_time) + chalk.green(`s`))
+                    const best_time:number = current_session
+                        .entries
+                        .reduce((acc,curr)=>{
+                            if(acc<curr.time){
+                                return acc
+                            }else{
+                                return curr.time
+                            }
+                        },Infinity)
+                    console.log(chalk.bold(`Best session time: `)+ chalk.magenta(best_time) + chalk.green(`s`))
+                    
                     console.log(chalk.dim(`To label/delete the last solve exit solve mode using Ctrl+C and use \n`) + chalk.blue(`cubetimer `) +chalk.cyan(`last-solve`) +  chalk.bgBlue(`<DNF|+2|DEL>`))
                     //reset
                     timer_running = false
