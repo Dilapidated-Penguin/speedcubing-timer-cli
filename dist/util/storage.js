@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.loadStats = loadStats;
 exports.saveStats = saveStats;
+exports.newSessionLog = newSessionLog;
 exports.loadData = loadData;
 exports.saveData = saveData;
 exports.retrieveAverageOver = retrieveAverageOver;
@@ -32,22 +33,25 @@ function loadStats() {
 function saveStats(data) {
     fs_1.default.writeFileSync(STAT_FILE, JSON.stringify(data, null, 2));
 }
+function newSessionLog(session_date) {
+    return {
+        entries: [],
+        date: session_date,
+        date_formatted: `${session_date.getFullYear()}-${(session_date.getMonth() + 1)
+            .toString()
+            .padStart(2, "0")}-${session_date.getDate().toString().padStart(2, "0")} ${session_date
+            .getHours()
+            .toString()
+            .padStart(2, "0")}:${session_date.getMinutes().toString().padStart(2, "0")}:${session_date
+            .getSeconds()
+            .toString()
+            .padStart(2, "0")}`
+    };
+}
 function loadData() {
     if (!fs_1.default.existsSync(DATA_FILE)) {
         let date_now = new Date(Date.now());
-        let val = {
-            entries: [],
-            date: date_now,
-            date_formatted: `${date_now.getFullYear()}-${(date_now.getMonth() + 1)
-                .toString()
-                .padStart(2, "0")}-${date_now.getDate().toString().padStart(2, "0")} ${date_now
-                .getHours()
-                .toString()
-                .padStart(2, "0")}:${date_now.getMinutes().toString().padStart(2, "0")}:${date_now
-                .getSeconds()
-                .toString()
-                .padStart(2, "0")}`
-        };
+        let val = newSessionLog(date_now);
         var Storage = new Map([
             [date_now, val]
         ]);

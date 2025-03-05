@@ -44,9 +44,21 @@ const chalk_1 = __importDefault(require("chalk"));
 const commander_1 = require("commander");
 const events_json_1 = require("./events.json");
 const prompts_1 = require("@inquirer/prompts");
+//const storage = require("./util/storage")
+//const settingsUtil = require("./util/settings")
+const storage = __importStar(require("./util/storage"));
 const settingsUtil = __importStar(require("./util/settings"));
 var Scrambow = require('scrambow').Scrambow;
 const program = new commander_1.Command();
+var saved_data = storage.loadData();
+//timer variables**********************************
+//process.stdin.setRawMode(true);
+let timer_running = false;
+let startTime = null;
+let space_been_pressed = false;
+const node_global_key_listener_1 = require("@futpib/node-global-key-listener");
+const listener = new node_global_key_listener_1.GlobalKeyboardListener();
+//*************************************************
 console.log(figlet_1.default.textSync("cli timer"));
 program
     .version("1.0.0")
@@ -132,20 +144,43 @@ function validEvent(event_to_check) {
 }
 function startSession(event, options) {
     console.clear();
-    const session_date = Date.now();
+    const session = Date.now();
+    const session_date = new Date(session);
     console.log(figlet_1.default.textSync('session:'));
-    console.log(figlet_1.default.textSync(`${session_date}`));
+    console.log(figlet_1.default.textSync(`${session}`));
     const current_settings = settingsUtil.loadSettings();
-    //scramble generator
+    //saved_data.data.set(new Date(session_date)
+    saved_data.data.set(session_date, storage.newSessionLog(session_date));
+    newSolve(current_settings, event, session_date, options);
+}
+function newSolve(current_settings, event, session_date, option) {
     var scramble_generator = new Scrambow();
+    process.stdin.resume();
     let scramble = scramble_generator
         .setType(event)
         .setLength(current_settings.scramble_length)
         .get(1)[0]
         .scramble_string;
     console.log(stylizeScramble(scramble));
+    listener.addListener(function (e, down) {
+        console.log(`${e.name} ${e.state == "DOWN" ? "DOWN" : "UP  "} [${e.rawKey._nameRaw}]`);
+        if ((e.name === "SPACE")) {
+            console.log(`the space bar is currently ${e.state}`);
+        }
+    });
 }
-//acc += scramble_styling[index]
+function stopTimer() {
+    if (!startTime)
+        return;
+    timer_running = false;
+    const endTime = process.hrtime(startTime);
+    const elapsedTime = endTime[0] + endTime[1] / 1e9;
+    console.log(chalk_1.default.bold(`Time: `) + elapsedTime.toFixed(4) + chalk_1.default.green('s'));
+}
+function startTimer() {
+    startTime = process.hrtime();
+    timer_running = true;
+}
 function stylizeScramble(scramble) {
     return scramble
         .trim()
@@ -162,6 +197,10 @@ function stylizeScramble(scramble) {
                 return acc += chalk_1.default.greenBright(curr);
             case `'`:
                 return acc += chalk_1.default.whiteBright(curr);
+            case '2':
+                return acc += chalk_1.default.cyan(curr);
+            case 'F':
+                return acc += chalk_1.default.magenta.underline(curr);
             default:
                 return acc += chalk_1.default.magenta(curr);
         }

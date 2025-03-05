@@ -28,20 +28,19 @@ const program = new Command();
 
 var saved_data = storage.loadData()
 
-var keypress = require('keypress');
-
 
 //timer variables**********************************
-const readline = require("node:readline");
 
-readline.emitKeypressEvents(process.stdin);
-process.stdin.setRawMode(true);
+//process.stdin.setRawMode(true);
 
 let timer_running:boolean = false
-let space_been_pressed:boolean = false
+
 let startTime:[number,number] | null = null
 
-let keysPressed = new Set();
+let space_been_pressed:boolean = false
+
+import {GlobalKeyboardListener} from "@futpib/node-global-key-listener";
+const listener = new GlobalKeyboardListener();
 //*************************************************
 
 
@@ -148,12 +147,16 @@ function startSession(event: string,options:any):void{
 
     const current_settings:settings = settingsUtil.loadSettings()
     //saved_data.data.set(new Date(session_date)
+    
+    saved_data.data.set(session_date,storage.newSessionLog(session_date,event))
+    saved_data.last_accessed_log = session_date
 
-    saved_data.data.set(session_date,storage.newSessionLog(session_date))
+    storage.saveData(saved_data)
     newSolve(current_settings,event,session_date,options)
 }
 function newSolve(current_settings:settings,event: string,session_date:Date,option:any):void{
     var scramble_generator = new Scrambow()
+    process.stdin.resume();
 
     let scramble: string = scramble_generator
         .setType(event)
@@ -163,14 +166,63 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
 
     console.log(stylizeScramble(scramble))
 
+    listener.addListener(function (e, down) {
+        if((e.name === "SPACE")){
+            if(!timer_running){
+                if(e.state === "DOWN"){
+                    if(!space_been_pressed){
+                        space_been_pressed = true
+                        process.stdout.write(chalk.bgRed('...'));
+                    }
+                }else{
+                    process.stdout.write('\x1b[2K');  // Clear the line
+                    process.stdout.write(chalk.bgGreenBright('SOLVE') + '\n');
+                    startTimer()
+                }
+            }else{
+                if(e.state === "DOWN"){
+                    const elapsedTime:number = stopTimer()
+                    const current_session:sessionLog = saved_data.data.get(session_date)
+                    current_session.entries.push({
+                        scramble: scramble,
+                        time: elapsedTime,
+                        label: null
+                    })
+                    const session_average = current_session
+                        .entries
+                        .reduce((acc,curr)=>{
+                            return acc += curr.time
+                        },0)/current_session.entries.length
+                    
+                    current_session.session_average = session_average
+                    saved_data.data.set(session_date,current_session)
+                    storage.saveData(saved_data)
+
+                    //logging data
+                    console.log( chalk.bold(`Time: `) +  elapsedTime.toFixed(4) + chalk.green('s'));
+                    console.log( chalk.bold(`session average: `) + chalk.magenta(session_average) + chalk.green(`s`))
+                    
+                    
+                    console.log(chalk.bold(`Ao5: `) + + chalk.magenta(storage.Ao5(session_date)) + chalk.green(`s`))
+                    console.log(chalk.bold(`Ao12: `) + + chalk.magenta(storage.Ao12(session_date)) + chalk.green(`s`))
+
+                    console.log(chalk.dim(`To label/delete the last solve exit solve mode using Ctrl+C and use \n`) + chalk.blue(`cubetimer `) +chalk.cyan(`last-solve`) +  chalk.bgBlue(`<DNF|+2|DEL>`))
+                    //reset
+                    timer_running = false
+                    startTime = null
+                    space_been_pressed = false
+                }
+            }
+
+        }
+    });
 }
-function stopTimer():void{
+function stopTimer():number{
     if (!startTime) return;
 
     timer_running = false
     const endTime = process.hrtime(startTime)
-    const elapsedTime = endTime[0] + endTime[1] / 1e9;
-    console.log( chalk.bold(`Time: `) +  elapsedTime.toFixed(4) + chalk.green('s'));
+    return  endTime[0] + endTime[1] / 1e9;
 }
 function startTimer():void{
     startTime = process.hrtime()

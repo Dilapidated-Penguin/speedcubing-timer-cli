@@ -18,6 +18,7 @@
   "license": "MIT",
   "type": "commonjs",
   "dependencies": {
+    "@futpib/node-global-key-listener": "^1.0.3",
     "@inquirer/prompts": "^7.3.2",
     "chalk": "^5.4.1",
     "commander": "^13.1.0",

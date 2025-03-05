@@ -1,14 +1,16 @@
 import { type } from "os";
 
 export interface SolveInstance {
-    time: Date;
+    time: number;
     scramble: string;
-    format: string;
+    label: string|null;
 }
 export interface sessionLog {
     entries: SolveInstance[];
     date: Date;
     date_formatted : string;
+    session_average: number|null;
+    event: string |null;
 }
 export interface file_data {
     data: Map<Date,sessionLog>;

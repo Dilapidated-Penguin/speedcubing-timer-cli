@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
 import {sessionLog, file_data,global_statistics} from "./interfaces"
 
@@ -21,7 +22,7 @@ export function loadStats():global_statistics{
 export function saveStats(data:global_statistics):void {
     fs.writeFileSync(STAT_FILE, JSON.stringify( data , null, 2))
 }
-export function newSessionLog(session_date:Date):sessionLog{
+export function newSessionLog(session_date:Date,event:string|null = null):sessionLog{
     return {
         entries: [],
         date: session_date,
@@ -33,7 +34,9 @@ export function newSessionLog(session_date:Date):sessionLog{
             .padStart(2, "0")}:${session_date.getMinutes().toString().padStart(2, "0")}:${session_date
             .getSeconds()
             .toString()
-            .padStart(2, "0")}`
+            .padStart(2, "0")}`,
+        session_average: null,
+        event: event
     }
 }
 
@@ -58,21 +61,26 @@ export function saveData(data: file_data): void {
   fs.writeFileSync(DATA_FILE, JSON.stringify( data , null, 2));
 }
 
-export function retrieveAverageOver(average_num:number, date:Date|null = null):number {
+export function retrieveAverageOver(average_num:number, date:Date|null = null):number|null {
     if(!fs.existsSync(DATA_FILE)){
         return null
     }else{
+
         const file_data = loadData()
         const session_date = date ?? file_data.last_accessed_log
+        if(file_data.data.size < average_num){
+            return null
+        }else{
+            return file_data.data.get(session_date)
+                .entries.slice(-average_num)
+                .map((solve_instance)=>{
+                    return solve_instance.time
+                })
+                .reduce((acc,curr)=>{
+                    return acc += curr
+                },0)/average_num            
+        }
 
-        return file_data.data.get(session_date)
-            .entries.slice(-average_num)
-            .map((solve_instance)=>{
-                return solve_instance.time.getTime()
-            })
-            .reduce((acc,curr)=>{
-                return acc += curr
-            },0)/average_num
     }
 }
 
@@ -96,7 +104,7 @@ export function averageOf(average_num:number, date:Date|null = null,filter_proce
         let retrieved_times = file_data.data.get(session_date) 
             .entries.slice(-average_num)
             .map((solve_instance)=>{
-                return solve_instance.time.getTime()
+                return solve_instance.time
             })
 
         retrieved_times = filter_process(retrieved_times)
