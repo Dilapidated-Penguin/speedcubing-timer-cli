@@ -114,7 +114,7 @@ function averageOf(average_num, session, filter_process) {
         return null;
     }
     else {
-        if (session.entries.length <= 1) {
+        if (session.entries.length <= average_num) {
             return null;
         }
         else {

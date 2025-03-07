@@ -36,16 +36,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-//const {Command} = require("commander")
-//const figlet = require("figlet")
-//const chalk = require("chalk")
 const figlet_1 = __importDefault(require("figlet"));
 const chalk_1 = __importDefault(require("chalk"));
 const commander_1 = require("commander");
 const events_json_1 = require("./events.json");
 const prompts_1 = require("@inquirer/prompts");
-//const storage = require("./util/storage")
-//const settingsUtil = require("./util/settings")
 const storage = __importStar(require("./util/storage"));
 const settingsUtil = __importStar(require("./util/settings"));
 var Scrambow = require('scrambow').Scrambow;
@@ -208,6 +203,10 @@ function newSolve(current_settings, event, session_date, option) {
                         space_been_pressed = true;
                         process.stdout.write(chalk_1.default.bgRed('...'));
                     }
+                    else {
+                        process.stdout.write("\b \b");
+                        //potential patch for space
+                    }
                 }
                 else {
                     if (space_been_pressed) {
@@ -271,7 +270,8 @@ function newSolve(current_settings, event, session_date, option) {
                     timer_running = false;
                     startTime = null;
                     space_been_pressed = false;
-                    console.log(chalk_1.default.dim(`Exit session mode using`), chalk_1.default.green(`Ctrl+C`));
+                    console.log(chalk_1.default.dim(`Exit session mode using`), chalk_1.default.green(`Ctrl+C \n`));
+                    console.log(chalk_1.default.bold.magentaBright(`Whenever ready use the spacebar to start a new solve`));
                 }
             }
         }

@@ -9,10 +9,7 @@ export interface sessionLog {
     entries: SolveInstance[];
     date: Date;
     date_formatted : string;
-    session_average: number|null;
     event: string |null;
-    worst_time: number |null;
-    best_time: number | null;
 }
 export interface file_data {
     data: Map<Date,sessionLog>;
@@ -20,14 +17,15 @@ export interface file_data {
 }
 //######################
 export interface session_statistics {
-    solve_mean:number;
+    session_mean:number;
     standard_deviation: number;
+    variance: number;
     fastest_solve: number;
     slowest_solve: number;
 }
 
 export interface global_statistics {
-    session_data:session_statistics[];
+    session_data: Map<Date,session_statistics>;
     pb_time: number | null;
     pb_Ao5:number | null;
     pb_Ao12:number | null;

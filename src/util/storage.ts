@@ -1,8 +1,9 @@
 import fs from 'fs';
 import path from 'path';
+import { parse } from 'path/posix';
 import { fileURLToPath } from 'url';
 
-import {sessionLog, file_data,global_statistics} from "./interfaces"
+import {sessionLog, file_data,global_statistics, session_statistics} from "./interfaces"
 
 const DATA_FILE = path.join(__dirname, './data.json');
 const STAT_FILE = path.join(__dirname,'./stats.json')
@@ -10,17 +11,29 @@ const STAT_FILE = path.join(__dirname,'./stats.json')
 export function loadStats():global_statistics{
     if(!fs.existsSync(STAT_FILE)){
         return {
-            session_data: [],
+            session_data: new Map(),
             pb_time: null,
             pb_Ao5: null,
             pb_Ao12:null
         }
     }else{
-        return JSON.parse(fs.readFileSync(STAT_FILE, 'utf-8'));
+        const parsed:global_statistics = JSON.parse(fs.readFileSync(STAT_FILE, 'utf-8'))
+        const restored_data = new Map<Date,session_statistics>(parsed.session_data)
+        return {
+            session_data:restored_data,
+            pb_Ao12:parsed.pb_Ao12,
+            pb_Ao5:parsed.pb_Ao5,
+            pb_time:parsed.pb_time
+        }
     }
 }
 export function saveStats(data:global_statistics):void {
-    fs.writeFileSync(STAT_FILE, JSON.stringify( data , null, 2))
+    fs.writeFileSync(STAT_FILE, JSON.stringify( {
+        session_data:[...data.session_data],
+        pb_Ao12:data.pb_Ao12,
+        pb_Ao5:data.pb_Ao5,
+        pb_time:data.pb_time
+    } , null, 2))
 }
 export function newSessionLog(session_date:Date,event:string|null = null):sessionLog{
     return {
@@ -35,10 +48,7 @@ export function newSessionLog(session_date:Date,event:string|null = null):sessio
             .getSeconds()
             .toString()
             .padStart(2, "0")}`,
-        session_average: null,
         event: event,
-        worst_time: null,
-        best_time: null
     }
 }
 

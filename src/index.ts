@@ -5,7 +5,7 @@ import { Command } from "commander";
 import {event_choices,events_list} from './events.json'
  
 import { select,number, input} from '@inquirer/prompts';
-import {settings, sessionLog, file_data,global_statistics,event_types} from "./util/interfaces"
+import {settings, sessionLog, file_data,global_statistics,event_types, session_statistics} from "./util/interfaces"
 
 import fs from 'fs'
 import path from 'path'
@@ -175,6 +175,7 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
         }
         if((e.name === "E") && (e.state === "DOWN")){
             const current_session:sessionLog = saved_data.data.get(session_date)
+            console.log(`\n \n`)
             if(current_session.entries.length>=1){
                 select({
                     message:`Select the label for the previous solve`,
@@ -189,12 +190,15 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                     saved_data.data.set(session_date,current_session)
                     storage.saveData(saved_data)
                     console.log(chalk.green(`Last solve labelled ${answer}`))
+                    console.log(chalk.bold.magentaBright(`Whenever ready use the spacebar to start a new solve`))
+
                 }).catch((err)=>{
                     console.log(chalk.red(`An error has occurred`))
                 })
             }else{
                 console.log(chalk.red(`There exist no entries in the current session to label`))
             }
+            console.log(`\n \n`)
         }
         if((e.name === "SPACE")){
             if(!timer_running){
@@ -210,7 +214,8 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                     if(space_been_pressed){
                         space_been_pressed = false
                         process.stdout.write('\x1b[2K');  // Clear the line
-                        process.stdout.write(chalk.bgGreenBright('SOLVE') + '\n');
+                        console.log(chalk.bgGreenBright('SOLVE') +
+                        '\n \n');
                         startTimer()
                     }
                 }
@@ -247,35 +252,60 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                             return curr.time
                         }
                     },-Infinity)
+                    const variance:number = current_session
+                        .entries
+                        .reduce((acc,curr)=>{
+                            return acc += (session_average - curr.time)**2 
+                        },0)/current_session.entries.length
 
-                    current_session.session_average = session_average
-                    current_session.best_time = best_time
-                    current_session.worst_time = worst_time
-
+                    const stats_data = storage.loadStats()
+                    const current_stats:session_statistics = {
+                        session_mean: session_average,
+                        standard_deviation: Math.sqrt(variance),
+                        variance: variance,
+                        fastest_solve: best_time,
+                        slowest_solve: worst_time
+                    }
+                    stats_data.session_data.set(session_date,current_stats)
+                    storage.saveStats(stats_data)
                     saved_data.data.set(session_date,current_session)
                     storage.saveData(saved_data)
-                    //logging data
-                    console.log( chalk.bold(`Time: `) +  elapsedTime.toFixed(4) + chalk.green('s'));
-                    console.log( chalk.bold(`session average: `) + chalk.magenta(session_average) + chalk.green(`s`))
+
                     
+                    console.log( chalk.bold(`Time: `) +  elapsedTime.toFixed(4) + chalk.green('s') +
+                    `\n`);
                     
                     console.log(chalk.bold(`Ao5: `)+ chalk.magenta(storage.Ao5(current_session) ?? "--") + chalk.green(`s`))
-                    console.log(chalk.bold(`Ao12: `)+ chalk.magenta(storage.Ao12(current_session)?? "--") + chalk.green(`s`))
+                    console.log(chalk.bold(`Ao12: `)+ chalk.magenta(storage.Ao12(current_session)?? "--") + chalk.green(`s`) +
+                    `\n \n`)
+                    //check if Ao5/12 are the best 
 
-                    console.log(chalk.bold(`Worst session time: `)+ chalk.redBright(worst_time) + chalk.green(`s`))
-                    console.log(chalk.bold(`Best session time: `)+ chalk.greenBright(best_time) + chalk.green(`s`))
-                    
-                    console.log(chalk.dim(`\n To label/delete the last solve simply use`) +
-                    chalk.italic.yellow(`e`) + chalk.dim(`/`) + chalk.italic.yellow(`d`) +
-                    chalk.dim(` respectively`))
+                    if(!option.focusMode){
+                        //table of stats
+                        const stats_table = {
+                            "mean": `${current_stats.session_mean}` + chalk.green(`s`),
+                            "𝜎": chalk.blue(current_stats.standard_deviation),
+                            "𝜎^2":current_stats.variance,
+                            "best": chalk.green(`${current_stats.fastest_solve}s`),
+                            "worst": `${current_stats.slowest_solve}` + chalk.green(`s`)
+                        }
+                        console.table(stats_table,["mean","𝜎","𝜎^2","best","worst"])
+
+                        console.log(`\n`)
+                        console.log(chalk.dim(`To label/delete the last solve simply use`) +
+                        chalk.italic.yellow(` e`) + chalk.dim(`/`) + chalk.italic.yellow(`d`) +
+                        chalk.dim(` respectively`))
+
+                        console.log(chalk.dim(`Exit session mode using`), chalk.green(`Ctrl+C`) +
+                        `\n`)
+
+                        console.log(chalk.bold.magentaBright(`Whenever ready use the spacebar to start a new solve`) +
+                        `\n \n`)
+                    }
                     //reset
                     timer_running = false
                     startTime = null
                     space_been_pressed = false
-                    console.log(chalk.dim(`Exit session mode using`), chalk.green(`Ctrl+C \n`))
-
-                    console.log(chalk.bold.magentaBright(`Whenever ready use the spacebar to start a new solve`))
-
                 }
             }
         }
