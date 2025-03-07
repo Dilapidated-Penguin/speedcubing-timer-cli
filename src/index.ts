@@ -1,6 +1,3 @@
-//const {Command} = require("commander")
-//const figlet = require("figlet")
-//const chalk = require("chalk")
 import figlet from "figlet";
 import chalk, { ChalkInstance } from "chalk";
 import { Command } from "commander";
@@ -10,14 +7,10 @@ import {event_choices,events_list} from './events.json'
 import { select,number, input} from '@inquirer/prompts';
 import {settings, sessionLog, file_data,global_statistics,event_types} from "./util/interfaces"
 
-//const fs = require("fs");
-//const path = require("path");
 import fs from 'fs'
 import path from 'path'
 
 
-//const storage = require("./util/storage")
-//const settingsUtil = require("./util/settings")
 import * as storage from "./util/storage"
 import  * as settingsUtil from "./util/settings"
 import { start } from "repl";
@@ -165,19 +158,61 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
         .scramble_string
 
     console.log(stylizeScramble(scramble))
-
+    
     listener.addListener(function (e, down) {
+        
+        if((e.name === "D") && (e.state === "DOWN")){
+            const current_session:sessionLog = saved_data.data.get(session_date)
+            if(current_session.entries.length>=1){
+                current_session.entries.pop()
+                console.log(chalk.blue(`Last solve deleted`))
+
+                saved_data.data.set(session_date,current_session)
+                storage.saveData(saved_data)
+            }else{
+                console.log(chalk.red(`There exist no entries in the current session to delete`))
+            }
+        }
+        if((e.name === "E") && (e.state === "DOWN")){
+            const current_session:sessionLog = saved_data.data.get(session_date)
+            if(current_session.entries.length>=1){
+                select({
+                    message:`Select the label for the previous solve`,
+                    choices:[
+                        '+3',
+                        'DNF',
+                        'OK'
+                    ]
+                }).then((answer:string)=>{
+                    current_session.entries.at(-1).label = answer
+
+                    saved_data.data.set(session_date,current_session)
+                    storage.saveData(saved_data)
+                    console.log(chalk.green(`Last solve labelled ${answer}`))
+                }).catch((err)=>{
+                    console.log(chalk.red(`An error has occurred`))
+                })
+            }else{
+                console.log(chalk.red(`There exist no entries in the current session to label`))
+            }
+        }
         if((e.name === "SPACE")){
             if(!timer_running){
                 if(e.state === "DOWN"){
                     if(!space_been_pressed){
                         space_been_pressed = true
                         process.stdout.write(chalk.bgRed('...'));
+                    }else{
+                        process.stdout.write("\b \b")
+                        //potential patch for space
                     }
                 }else{
-                    process.stdout.write('\x1b[2K');  // Clear the line
-                    process.stdout.write(chalk.bgGreenBright('SOLVE') + '\n');
-                    startTimer()
+                    if(space_been_pressed){
+                        space_been_pressed = false
+                        process.stdout.write('\x1b[2K');  // Clear the line
+                        process.stdout.write(chalk.bgGreenBright('SOLVE') + '\n');
+                        startTimer()
+                    }
                 }
             }else{
                 if(e.state === "DOWN"){
@@ -193,28 +228,7 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                         .reduce((acc,curr)=>{
                             return acc += curr.time
                         },0)/current_session.entries.length
-                    
-                    current_session.session_average = session_average
-                    saved_data.data.set(session_date,current_session)
-                    storage.saveData(saved_data)
 
-                    //logging data
-                    console.log( chalk.bold(`Time: `) +  elapsedTime.toFixed(4) + chalk.green('s'));
-                    console.log( chalk.bold(`session average: `) + chalk.magenta(session_average) + chalk.green(`s`))
-                    
-                    
-                    console.log(chalk.bold(`Ao5: `)+ chalk.magenta(storage.Ao5(session_date) ?? "--") + chalk.green(`s`))
-                    console.log(chalk.bold(`Ao12: `)+ chalk.magenta(storage.Ao12(session_date)?? "--") + chalk.green(`s`))
-                    const worst_time:number = current_session
-                        .entries
-                        .reduce((acc,curr)=>{
-                            if(acc>curr.time){
-                                return acc
-                            }else{
-                                return curr.time
-                            }
-                        },-Infinity)
-                    console.log(chalk.bold(`Worst session time: `)+ chalk.magenta(worst_time) + chalk.green(`s`))
                     const best_time:number = current_session
                         .entries
                         .reduce((acc,curr)=>{
@@ -224,16 +238,46 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                                 return curr.time
                             }
                         },Infinity)
-                    console.log(chalk.bold(`Best session time: `)+ chalk.magenta(best_time) + chalk.green(`s`))
+                    const worst_time:number = current_session
+                    .entries
+                    .reduce((acc,curr)=>{
+                        if(acc>curr.time){
+                            return acc
+                        }else{
+                            return curr.time
+                        }
+                    },-Infinity)
+
+                    current_session.session_average = session_average
+                    current_session.best_time = best_time
+                    current_session.worst_time = worst_time
+
+                    saved_data.data.set(session_date,current_session)
+                    storage.saveData(saved_data)
+                    //logging data
+                    console.log( chalk.bold(`Time: `) +  elapsedTime.toFixed(4) + chalk.green('s'));
+                    console.log( chalk.bold(`session average: `) + chalk.magenta(session_average) + chalk.green(`s`))
                     
-                    console.log(chalk.dim(`To label/delete the last solve exit solve mode using Ctrl+C and use \n`) + chalk.blue(`cubetimer `) +chalk.cyan(`last-solve`) +  chalk.bgBlue(`<DNF|+2|DEL>`))
+                    
+                    console.log(chalk.bold(`Ao5: `)+ chalk.magenta(storage.Ao5(current_session) ?? "--") + chalk.green(`s`))
+                    console.log(chalk.bold(`Ao12: `)+ chalk.magenta(storage.Ao12(current_session)?? "--") + chalk.green(`s`))
+
+                    console.log(chalk.bold(`Worst session time: `)+ chalk.redBright(worst_time) + chalk.green(`s`))
+                    console.log(chalk.bold(`Best session time: `)+ chalk.greenBright(best_time) + chalk.green(`s`))
+                    
+                    console.log(chalk.dim(`\n To label/delete the last solve simply use`) +
+                    chalk.italic.yellow(`e`) + chalk.dim(`/`) + chalk.italic.yellow(`d`) +
+                    chalk.dim(` respectively`))
                     //reset
                     timer_running = false
                     startTime = null
                     space_been_pressed = false
+                    console.log(chalk.dim(`Exit session mode using`), chalk.green(`Ctrl+C \n`))
+
+                    console.log(chalk.bold.magentaBright(`Whenever ready use the spacebar to start a new solve`))
+
                 }
             }
-
         }
     });
 }

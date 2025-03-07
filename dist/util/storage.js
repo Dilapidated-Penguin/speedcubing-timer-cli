@@ -15,8 +15,8 @@ exports.averageOf = averageOf;
 exports.remove_extremes = remove_extremes;
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
-const DATA_FILE = path_1.default.join(__dirname, '../../data.json');
-const STAT_FILE = path_1.default.join(__dirname, '../../stats.json');
+const DATA_FILE = path_1.default.join(__dirname, './data.json');
+const STAT_FILE = path_1.default.join(__dirname, './stats.json');
 function loadStats() {
     if (!fs_1.default.existsSync(STAT_FILE)) {
         return {
@@ -33,7 +33,7 @@ function loadStats() {
 function saveStats(data) {
     fs_1.default.writeFileSync(STAT_FILE, JSON.stringify(data, null, 2));
 }
-function newSessionLog(session_date) {
+function newSessionLog(session_date, event = null) {
     return {
         entries: [],
         date: session_date,
@@ -45,7 +45,11 @@ function newSessionLog(session_date) {
             .padStart(2, "0")}:${session_date.getMinutes().toString().padStart(2, "0")}:${session_date
             .getSeconds()
             .toString()
-            .padStart(2, "0")}`
+            .padStart(2, "0")}`,
+        session_average: null,
+        event: event,
+        worst_time: null,
+        best_time: null
     };
 }
 function loadData() {
@@ -60,10 +64,19 @@ function loadData() {
             last_accessed_log: date_now
         };
     }
-    return JSON.parse(fs_1.default.readFileSync(DATA_FILE, 'utf-8'));
+    const parsed = JSON.parse(fs_1.default.readFileSync(DATA_FILE, 'utf-8'));
+    const restored_data = new Map(parsed.data);
+    return {
+        data: restored_data,
+        last_accessed_log: parsed.last_accessed_log
+    };
 }
 function saveData(data) {
-    fs_1.default.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+    const session_array = [...data.data];
+    fs_1.default.writeFileSync(DATA_FILE, JSON.stringify({
+        data: session_array,
+        last_accessed_log: data.last_accessed_log
+    }, null, 2));
 }
 function retrieveAverageOver(average_num, date = null) {
     if (!fs_1.default.existsSync(DATA_FILE)) {
@@ -72,41 +85,51 @@ function retrieveAverageOver(average_num, date = null) {
     else {
         const file_data = loadData();
         const session_date = date !== null && date !== void 0 ? date : file_data.last_accessed_log;
-        return file_data.data.get(session_date)
-            .entries.slice(-average_num)
-            .map((solve_instance) => {
-            return solve_instance.time.getTime();
-        })
-            .reduce((acc, curr) => {
-            return acc += curr;
-        }, 0) / average_num;
+        if (file_data.data.size < average_num) {
+            return null;
+        }
+        else {
+            return file_data.data.get(session_date)
+                .entries.slice(-average_num)
+                .map((solve_instance) => {
+                return solve_instance.time;
+            })
+                .reduce((acc, curr) => {
+                return acc += curr;
+            }, 0) / average_num;
+        }
     }
 }
-function Ao5(date = null) {
-    return averageOf(5, date, remove_extremes);
+function Ao5(session) {
+    return averageOf(5, session, remove_extremes);
 }
-function Ao12(date = null) {
+function Ao12(session) {
     const filter = (arr) => {
         return remove_extremes(remove_extremes(arr));
     };
-    return averageOf(12, date, filter);
+    return averageOf(12, session, filter);
 }
-function averageOf(average_num, date = null, filter_process) {
+function averageOf(average_num, session, filter_process) {
     if (!fs_1.default.existsSync(DATA_FILE)) {
         return null;
     }
     else {
-        const file_data = loadData();
-        const session_date = date !== null && date !== void 0 ? date : file_data.last_accessed_log;
-        let retrieved_times = file_data.data.get(session_date)
-            .entries.slice(-average_num)
-            .map((solve_instance) => {
-            return solve_instance.time.getTime();
-        });
-        retrieved_times = filter_process(retrieved_times);
-        return retrieved_times.reduce((acc, curr) => {
-            return acc += curr;
-        }, 0) / average_num;
+        if (session.entries.length <= 1) {
+            return null;
+        }
+        else {
+            let retrieved_times = session
+                .entries
+                .slice(-average_num)
+                .map((solve_instance) => {
+                return solve_instance.time;
+            });
+            retrieved_times = filter_process(retrieved_times);
+            return retrieved_times
+                .reduce((acc, curr) => {
+                return acc += curr;
+            }, 0) / average_num;
+        }
     }
 }
 function remove_extremes(arr) {

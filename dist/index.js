@@ -150,7 +150,9 @@ function startSession(event, options) {
     console.log(figlet_1.default.textSync(`${session}`));
     const current_settings = settingsUtil.loadSettings();
     //saved_data.data.set(new Date(session_date)
-    saved_data.data.set(session_date, storage.newSessionLog(session_date));
+    saved_data.data.set(session_date, storage.newSessionLog(session_date, event));
+    saved_data.last_accessed_log = session_date;
+    storage.saveData(saved_data);
     newSolve(current_settings, event, session_date, options);
 }
 function newSolve(current_settings, event, session_date, option) {
@@ -163,9 +165,115 @@ function newSolve(current_settings, event, session_date, option) {
         .scramble_string;
     console.log(stylizeScramble(scramble));
     listener.addListener(function (e, down) {
-        console.log(`${e.name} ${e.state == "DOWN" ? "DOWN" : "UP  "} [${e.rawKey._nameRaw}]`);
+        var _a, _b;
+        if ((e.name === "D") && (e.state === "DOWN")) {
+            const current_session = saved_data.data.get(session_date);
+            if (current_session.entries.length >= 1) {
+                current_session.entries.pop();
+                console.log(chalk_1.default.blue(`Last solve deleted`));
+                saved_data.data.set(session_date, current_session);
+                storage.saveData(saved_data);
+            }
+            else {
+                console.log(chalk_1.default.red(`There exist no entries in the current session to delete`));
+            }
+        }
+        if ((e.name === "E") && (e.state === "DOWN")) {
+            const current_session = saved_data.data.get(session_date);
+            if (current_session.entries.length >= 1) {
+                (0, prompts_1.select)({
+                    message: `Select the label for the previous solve`,
+                    choices: [
+                        '+3',
+                        'DNF',
+                        'OK'
+                    ]
+                }).then((answer) => {
+                    current_session.entries.at(-1).label = answer;
+                    saved_data.data.set(session_date, current_session);
+                    storage.saveData(saved_data);
+                    console.log(chalk_1.default.green(`Last solve labelled ${answer}`));
+                }).catch((err) => {
+                    console.log(chalk_1.default.red(`An error has occurred`));
+                });
+            }
+            else {
+                console.log(chalk_1.default.red(`There exist no entries in the current session to label`));
+            }
+        }
         if ((e.name === "SPACE")) {
-            console.log(`the space bar is currently ${e.state}`);
+            if (!timer_running) {
+                if (e.state === "DOWN") {
+                    if (!space_been_pressed) {
+                        space_been_pressed = true;
+                        process.stdout.write(chalk_1.default.bgRed('...'));
+                    }
+                }
+                else {
+                    if (space_been_pressed) {
+                        space_been_pressed = false;
+                        process.stdout.write('\x1b[2K'); // Clear the line
+                        process.stdout.write(chalk_1.default.bgGreenBright('SOLVE') + '\n');
+                        startTimer();
+                    }
+                }
+            }
+            else {
+                if (e.state === "DOWN") {
+                    const elapsedTime = stopTimer();
+                    const current_session = saved_data.data.get(session_date);
+                    current_session.entries.push({
+                        scramble: scramble,
+                        time: elapsedTime,
+                        label: null
+                    });
+                    const session_average = current_session
+                        .entries
+                        .reduce((acc, curr) => {
+                        return acc += curr.time;
+                    }, 0) / current_session.entries.length;
+                    const best_time = current_session
+                        .entries
+                        .reduce((acc, curr) => {
+                        if (acc < curr.time) {
+                            return acc;
+                        }
+                        else {
+                            return curr.time;
+                        }
+                    }, Infinity);
+                    const worst_time = current_session
+                        .entries
+                        .reduce((acc, curr) => {
+                        if (acc > curr.time) {
+                            return acc;
+                        }
+                        else {
+                            return curr.time;
+                        }
+                    }, -Infinity);
+                    current_session.session_average = session_average;
+                    current_session.best_time = best_time;
+                    current_session.worst_time = worst_time;
+                    saved_data.data.set(session_date, current_session);
+                    storage.saveData(saved_data);
+                    //logging data
+                    console.log(chalk_1.default.bold(`Time: `) + elapsedTime.toFixed(4) + chalk_1.default.green('s'));
+                    console.log(chalk_1.default.bold(`session average: `) + chalk_1.default.magenta(session_average) + chalk_1.default.green(`s`));
+                    console.log(chalk_1.default.bold(`Ao5: `) + chalk_1.default.magenta((_a = storage.Ao5(current_session)) !== null && _a !== void 0 ? _a : "--") + chalk_1.default.green(`s`));
+                    console.log(chalk_1.default.bold(`Ao12: `) + chalk_1.default.magenta((_b = storage.Ao12(current_session)) !== null && _b !== void 0 ? _b : "--") + chalk_1.default.green(`s`));
+                    console.log(chalk_1.default.bold(`Worst session time: `) + chalk_1.default.redBright(worst_time) + chalk_1.default.green(`s`));
+                    console.log(chalk_1.default.bold(`Best session time: `) + chalk_1.default.greenBright(best_time) + chalk_1.default.green(`s`));
+                    console.log(chalk_1.default.dim(`\n To label/delete the last solve simply use`) +
+                        chalk_1.default.italic.yellow(`e`) + chalk_1.default.dim(`/`) + chalk_1.default.italic.yellow(`d`) +
+                        chalk_1.default.dim(` respectively`));
+                    //reset
+                    timer_running = false;
+                    startTime = null;
+                    space_been_pressed = false;
+                    console.log(chalk_1.default.dim(`Exit session mode using`), chalk_1.default.green(`Ctrl+C`));
+                }
+            }
         }
     });
 }
@@ -174,8 +282,7 @@ function stopTimer() {
         return;
     timer_running = false;
     const endTime = process.hrtime(startTime);
-    const elapsedTime = endTime[0] + endTime[1] / 1e9;
-    console.log(chalk_1.default.bold(`Time: `) + elapsedTime.toFixed(4) + chalk_1.default.green('s'));
+    return endTime[0] + endTime[1] / 1e9;
 }
 function startTimer() {
     startTime = process.hrtime();

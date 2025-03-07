@@ -11,6 +11,8 @@ export interface sessionLog {
     date_formatted : string;
     session_average: number|null;
     event: string |null;
+    worst_time: number |null;
+    best_time: number | null;
 }
 export interface file_data {
     data: Map<Date,sessionLog>;
