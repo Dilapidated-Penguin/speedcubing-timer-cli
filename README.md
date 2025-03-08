@@ -1,14 +1,18 @@
 # 🧩 CubeTimer
 
 ![Work in Progress](https://img.shields.io/badge/status-in%20development-orange)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-43853D?logo=node.js&logoColor=white)
 
-A **fast and lightweight CLI timer** for speedcubing. Track your solves, generate random scrambles, and analyze your times—all from the terminal!
+A **fast and lightweight CLI timer** for speedcubing. Generate random scrambles and track your solves and analyze your times.
 
 ## 🚀 Features
-- ⏱️ **Simple Timer** – Start and stop the timer using the spacebar.
-- 🔀 **Scramble Generator** – Get random scrambles for practice.
-- 📊 **Solve Analysis** – View your past times and calculate averages.
-- 🎨 **Customizable & Stylish** – Uses `chalk` for colorful output.
+ - ✅ Accurate Timer – Supports stackmat, spacebar, and mouse click timing.
+ - ✅ Scramble Generator – Provides scrambles for 2x2-7x7, Megaminx, Pyraminx, Skewb, Square-1, and Clock.
+ - ✅ Session Statistics – Tracks mean, average of 5/12, best/worst times, and standard deviation.
+
+
+<img src="assets/help.png" alt="Help page of the cli" width="500">
 
 ## 📦 Installation
 
@@ -36,11 +40,6 @@ cubetimer start
 ```
 Press **spacebar** to start/stop the timer.
 
-### **Generate a Scramble**
-```sh
-cubetimer scramble
-```
-
 ### **View Solve History**
 ```sh
 cubetimer history
@@ -56,8 +55,9 @@ npm run build
 - [`@futpib/node-global-key-listener`](https://www.npmjs.com/package/@futpib/node-global-key-listener) – Global key listening for timing functionality.
 - [`chalk`](https://www.npmjs.com/package/chalk) – Terminal styling.
 - [`keypress`](https://www.npmjs.com/package/keypress) – Key event handling.
-- [`scrambow`](https://www.npmjs.com/package/scrambow) – Scramble generation.
-
+- [`scrambow`](https://www.npmjs.com/package/scrambow) 
+    – Scrambow is used for scramble generation and so the question of whether this cli supports an event is implicitly the question of whether scrambow supports the event.
+- [`nice-table`](https://www.npmjs.com/package/nice-table) - for rendering tables in the console with a clean and structured format.
 ## 📜 License
 This project is licensed under the **MIT License**.
 

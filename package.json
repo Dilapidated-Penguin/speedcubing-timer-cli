@@ -2,7 +2,10 @@
   "name": "cubetimer",
   "version": "1.0.0",
   "description": " fast and lightweight CLI timer for speedcubing. Track your solves, get random scrambles, and analyze your times",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "bin":{
+    "cubetimer": "./dist/index.js"
+  },
   "scripts": {
     "build": "npx tsc",
     "test": "echo \"Error: no test specified\" && exit 1"

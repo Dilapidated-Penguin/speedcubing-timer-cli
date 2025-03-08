@@ -1,3 +1,4 @@
+#! /usr/bin/env node
 import figlet from "figlet";
 import chalk, { ChalkInstance } from "chalk";
 import { Command } from "commander";
@@ -14,7 +15,6 @@ import path from 'path'
 
 import * as storage from "./util/storage"
 import  * as settingsUtil from "./util/settings"
-import { start } from "repl";
 
 var Scrambow = require('scrambow').Scrambow;
 
@@ -32,23 +32,24 @@ let timer_running:boolean = false
 let startTime:[number,number] | null = null
 
 let space_been_pressed:boolean = false
+let new_scramble:boolean = false
 
 import {GlobalKeyboardListener} from "@futpib/node-global-key-listener";
 const listener = new GlobalKeyboardListener();
 //*************************************************
 
 
-console.log(figlet.textSync("cli timer"))
+console.log(figlet.textSync("cubetimer"))
 program
     .version("1.0.0")
-    .description("fast and lightweight CLI timer for speedcubing. Track your solves, get random scrambles, and analyze your times")
+    .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)")
     .option("-s, --settings","Displays the current global settings for the cli timer")
 
 program
-    .command('startsession')
+    .command('start')
     .argument('[event]', 'the event you wish to practice','333')
     .option('-f, --focusMode','')
-    .description('Begin a session of practicing this specific event')
+    .description('Begin a session of practicing a certain event')
     .action((event:string,options:any)=>{
         console.log(event)
         if(event !== undefined){
@@ -146,6 +147,8 @@ function startSession(event: string,options:any):void{
     saved_data.last_accessed_log = session_date
 
     storage.saveData(saved_data)
+    new_scramble = true
+    listener.kill()
     newSolve(current_settings,event,session_date,options)
 }
 
@@ -159,6 +162,9 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
         .get(1)[0]
         .scramble_string
 
+    process.stdout.write("\x1b[2K]")
+    console.log(chalk.bold.red(`Scramble:`))
+    process.stdout.write("\b \b")
     console.log(stylizeScramble(scramble))
     
     listener.addListener(function (e, down) {
@@ -178,6 +184,7 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
         if((e.name === "N") && (e.state === "DOWN")){
             process.stdout.write('\x1b[2K');
             listener.kill()
+            new_scramble = true
             newSolve(current_settings,event,session_date,option)
         }
         if((e.name === "E") && (e.state === "DOWN")){
@@ -207,7 +214,7 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
             }
             console.log(`\n \n`)
         }
-        if((e.name === "SPACE")){
+        if((e.name === "SPACE") && (new_scramble)){
             if(!timer_running){
                 if(e.state === "DOWN"){
                     if(!space_been_pressed){
@@ -215,7 +222,6 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                         process.stdout.write(chalk.bgRed('...') +`\n`);
                     }else{
                         process.stdout.write("\b \b")
-                        //potential patch for space
                     }
                 }else{
                     if(space_been_pressed){
@@ -279,7 +285,9 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                     saved_data.data.set(session_date,current_session)
                     storage.saveData(saved_data)
 
-                    
+                    process.stdout.write("\b \b")
+                    console.log(figlet.textSync(`${elapsedTime.toFixed(2)}s`))
+                    process.stdout.write("\b \b")
                     console.log( chalk.bold(`Time: `) +  elapsedTime.toFixed(4) + chalk.green('s') +
                     `\n`);
                     
@@ -321,7 +329,7 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                     timer_running = false
                     startTime = null
                     space_been_pressed = false
-
+                    new_scramble = false
                 }
             }
         }
@@ -361,6 +369,5 @@ function stylizeScramble(scramble:string):string{
             default:
                 return acc += chalk.magenta(curr)
         }  
-        
     },'')
 }

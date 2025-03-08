@@ -1,3 +1,4 @@
+#! /usr/bin/env node
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -52,19 +53,20 @@ var saved_data = storage.loadData();
 let timer_running = false;
 let startTime = null;
 let space_been_pressed = false;
+let new_scramble = false;
 const node_global_key_listener_1 = require("@futpib/node-global-key-listener");
 const listener = new node_global_key_listener_1.GlobalKeyboardListener();
 //*************************************************
-console.log(figlet_1.default.textSync("cli timer"));
+console.log(figlet_1.default.textSync("cubetimer"));
 program
     .version("1.0.0")
-    .description("fast and lightweight CLI timer for speedcubing. Track your solves, get random scrambles, and analyze your times")
+    .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)")
     .option("-s, --settings", "Displays the current global settings for the cli timer");
 program
-    .command('startsession')
+    .command('start')
     .argument('[event]', 'the event you wish to practice', '333')
     .option('-f, --focusMode', '')
-    .description('Begin a session of practicing this specific event')
+    .description('Begin a session of practicing a certain event')
     .action((event, options) => {
     console.log(event);
     if (event !== undefined) {
@@ -149,6 +151,8 @@ function startSession(event, options) {
     saved_data.data.set(session_date, storage.newSessionLog(session_date, event));
     saved_data.last_accessed_log = session_date;
     storage.saveData(saved_data);
+    new_scramble = true;
+    listener.kill();
     newSolve(current_settings, event, session_date, options);
 }
 function newSolve(current_settings, event, session_date, option) {
@@ -159,6 +163,9 @@ function newSolve(current_settings, event, session_date, option) {
         .setLength(current_settings.scramble_length)
         .get(1)[0]
         .scramble_string;
+    process.stdout.write("\x1b[2K]");
+    console.log(chalk_1.default.bold.red(`Scramble:`));
+    process.stdout.write("\b \b");
     console.log(stylizeScramble(scramble));
     listener.addListener(function (e, down) {
         var _a, _b;
@@ -175,7 +182,9 @@ function newSolve(current_settings, event, session_date, option) {
             }
         }
         if ((e.name === "N") && (e.state === "DOWN")) {
+            process.stdout.write('\x1b[2K');
             listener.kill();
+            new_scramble = true;
             newSolve(current_settings, event, session_date, option);
         }
         if ((e.name === "E") && (e.state === "DOWN")) {
@@ -204,21 +213,21 @@ function newSolve(current_settings, event, session_date, option) {
             }
             console.log(`\n \n`);
         }
-        if ((e.name === "SPACE")) {
+        if ((e.name === "SPACE") && (new_scramble)) {
             if (!timer_running) {
                 if (e.state === "DOWN") {
                     if (!space_been_pressed) {
                         space_been_pressed = true;
-                        process.stdout.write(chalk_1.default.bgRed('...'));
+                        process.stdout.write(chalk_1.default.bgRed('...') + `\n`);
                     }
                     else {
                         process.stdout.write("\b \b");
-                        //potential patch for space
                     }
                 }
                 else {
                     if (space_been_pressed) {
                         space_been_pressed = false;
+                        process.stdout.write("\x1b[F"); //move back up a line
                         process.stdout.write('\x1b[2K'); // Clear the line
                         console.log(chalk_1.default.bgGreenBright('SOLVE') +
                             '\n \n');
@@ -277,6 +286,9 @@ function newSolve(current_settings, event, session_date, option) {
                     storage.saveStats(stats_data);
                     saved_data.data.set(session_date, current_session);
                     storage.saveData(saved_data);
+                    process.stdout.write("\b \b");
+                    console.log(figlet_1.default.textSync(`${elapsedTime.toFixed(2)}s`));
+                    process.stdout.write("\b \b");
                     console.log(chalk_1.default.bold(`Time: `) + elapsedTime.toFixed(4) + chalk_1.default.green('s') +
                         `\n`);
                     console.log(chalk_1.default.bold(`Ao5: `) + chalk_1.default.magenta((_a = storage.Ao5(current_session)) !== null && _a !== void 0 ? _a : "--") + chalk_1.default.green(`s`));
@@ -306,13 +318,14 @@ function newSolve(current_settings, event, session_date, option) {
                             chalk_1.default.dim(`) respectively`));
                         console.log(chalk_1.default.dim(`Exit session mode using`), chalk_1.default.green(`Ctrl+C`) +
                             `\n`);
-                        console.log(chalk_1.default.bold.magentaBright(`Whenever ready use the spacebar to start a new solve using`) + chalk_1.default.italic.yellow(`n`) +
+                        console.log(chalk_1.default.bold.magentaBright(`Whenever ready use the spacebar to start a new solve using`) + chalk_1.default.italic.yellow(` n`) +
                             `\n \n`);
                     }
                     //reset
                     timer_running = false;
                     startTime = null;
                     space_been_pressed = false;
+                    new_scramble = false;
                 }
             }
         }
