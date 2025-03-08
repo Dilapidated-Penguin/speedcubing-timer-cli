@@ -20,18 +20,30 @@ const STAT_FILE = path_1.default.join(__dirname, './stats.json');
 function loadStats() {
     if (!fs_1.default.existsSync(STAT_FILE)) {
         return {
-            session_data: [],
+            session_data: new Map(),
             pb_time: null,
             pb_Ao5: null,
             pb_Ao12: null
         };
     }
     else {
-        return JSON.parse(fs_1.default.readFileSync(STAT_FILE, 'utf-8'));
+        const parsed = JSON.parse(fs_1.default.readFileSync(STAT_FILE, 'utf-8'));
+        const restored_data = new Map(parsed.session_data);
+        return {
+            session_data: restored_data,
+            pb_Ao12: parsed.pb_Ao12,
+            pb_Ao5: parsed.pb_Ao5,
+            pb_time: parsed.pb_time
+        };
     }
 }
 function saveStats(data) {
-    fs_1.default.writeFileSync(STAT_FILE, JSON.stringify(data, null, 2));
+    fs_1.default.writeFileSync(STAT_FILE, JSON.stringify({
+        session_data: [...data.session_data],
+        pb_Ao12: data.pb_Ao12,
+        pb_Ao5: data.pb_Ao5,
+        pb_time: data.pb_time
+    }, null, 2));
 }
 function newSessionLog(session_date, event = null) {
     return {
@@ -46,10 +58,7 @@ function newSessionLog(session_date, event = null) {
             .getSeconds()
             .toString()
             .padStart(2, "0")}`,
-        session_average: null,
         event: event,
-        worst_time: null,
-        best_time: null
     };
 }
 function loadData() {

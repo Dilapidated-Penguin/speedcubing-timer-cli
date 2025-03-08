@@ -3,11 +3,12 @@ import chalk, { ChalkInstance } from "chalk";
 import { Command } from "commander";
 
 import {event_choices,events_list} from './events.json'
- 
+import { createTable } from 'nice-table';
+
 import { select,number, input} from '@inquirer/prompts';
 import {settings, sessionLog, file_data,global_statistics,event_types, session_statistics} from "./util/interfaces"
 
-import fs from 'fs'
+import fs, { stat } from 'fs'
 import path from 'path'
 
 
@@ -147,6 +148,7 @@ function startSession(event: string,options:any):void{
     storage.saveData(saved_data)
     newSolve(current_settings,event,session_date,options)
 }
+
 function newSolve(current_settings:settings,event: string,session_date:Date,option:any):void{
     var scramble_generator = new Scrambow()
     process.stdin.resume();
@@ -172,6 +174,11 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
             }else{
                 console.log(chalk.red(`There exist no entries in the current session to delete`))
             }
+        }
+        if((e.name === "N") && (e.state === "DOWN")){
+            process.stdout.write('\x1b[2K');
+            listener.kill()
+            newSolve(current_settings,event,session_date,option)
         }
         if((e.name === "E") && (e.state === "DOWN")){
             const current_session:sessionLog = saved_data.data.get(session_date)
@@ -205,7 +212,7 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                 if(e.state === "DOWN"){
                     if(!space_been_pressed){
                         space_been_pressed = true
-                        process.stdout.write(chalk.bgRed('...'));
+                        process.stdout.write(chalk.bgRed('...') +`\n`);
                     }else{
                         process.stdout.write("\b \b")
                         //potential patch for space
@@ -213,6 +220,7 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                 }else{
                     if(space_been_pressed){
                         space_been_pressed = false
+                        process.stdout.write("\x1b[F"); //move back up a line
                         process.stdout.write('\x1b[2K');  // Clear the line
                         console.log(chalk.bgGreenBright('SOLVE') +
                         '\n \n');
@@ -281,31 +289,39 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                     //check if Ao5/12 are the best 
 
                     if(!option.focusMode){
-                        //table of stats
-                        const stats_table = {
-                            "mean": `${current_stats.session_mean}` + chalk.green(`s`),
-                            "𝜎": chalk.blue(current_stats.standard_deviation),
-                            "𝜎^2":current_stats.variance,
-                            "best": chalk.green(`${current_stats.fastest_solve}s`),
-                            "worst": `${current_stats.slowest_solve}` + chalk.green(`s`)
-                        }
-                        console.table(stats_table,["mean","𝜎","𝜎^2","best","worst"])
+                        //solves
+                        console.table(createTable(current_session.entries.map((instance)=>{
+                            return {
+                                time: instance.time.toFixed(3),
+                                label: instance.label ?? 'OK'
+                            }
+                        }),['time','label']))
+                        //stats
+                        const titles:string[] = ['average','std. dev.','variance','fastest','slowest']
+                        const stats_string:string = Object.keys(current_stats)
+                            .map((stat_name:string,index:number)=>{
+                                return `${titles[index]}: ${chalk.bold(current_stats[stat_name].toFixed(3))}`
+                            })
+                            .join(chalk.blue(` | `))
+                        
+                            console.log(stats_string + `\n`)
 
                         console.log(`\n`)
-                        console.log(chalk.dim(`To label/delete the last solve simply use`) +
-                        chalk.italic.yellow(` e`) + chalk.dim(`/`) + chalk.italic.yellow(`d`) +
-                        chalk.dim(` respectively`))
+                        console.log(chalk.dim(`To label/delete the last solve simply use (`) +
+                        chalk.italic.yellow(`e`) + chalk.dim(`/`) + chalk.italic.yellow(`d`) +
+                        chalk.dim(`) respectively`))
 
                         console.log(chalk.dim(`Exit session mode using`), chalk.green(`Ctrl+C`) +
                         `\n`)
 
-                        console.log(chalk.bold.magentaBright(`Whenever ready use the spacebar to start a new solve`) +
+                        console.log(chalk.bold.magentaBright(`Whenever ready use the spacebar to start a new solve using`) + chalk.italic.yellow(` n`)+
                         `\n \n`)
                     }
                     //reset
                     timer_running = false
                     startTime = null
                     space_been_pressed = false
+
                 }
             }
         }
