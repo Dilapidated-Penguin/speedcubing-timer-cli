@@ -73,7 +73,6 @@ program
                 console.log(chalk.bgRed(`An error occurred`))
             })
         }
-        //cubeScramble = cube(Number(event), current_settings.scramble_length).toString()
     })
 
 program
@@ -278,7 +277,12 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                         fastest_solve: best_time,
                         slowest_solve: worst_time
                     }
+                    const current_Ao5:number = storage.Ao5(current_session)
+                    const current_Ao12:number = storage.Ao12(current_session)
+
                     stats_data.session_data.set(session_date,current_stats)
+                    stats_data.pb_Ao5 = (current_Ao5<stats_data.pb_Ao5) ? current_Ao5 : stats_data.pb_Ao5
+                    stats_data.pb_Ao12 = (current_Ao12<stats_data.pb_Ao12) ? current_Ao12 : stats_data.pb_Ao12
                     storage.saveStats(stats_data)
                     saved_data.data.set(session_date,current_session)
                     storage.saveData(saved_data)
@@ -289,8 +293,8 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                     console.log( chalk.bold(`Time: `) +  elapsedTime.toFixed(4) + chalk.green('s') +
                     `\n`);
                     
-                    console.log(chalk.bold(`Ao5: `)+ chalk.magenta(storage.Ao5(current_session) ?? "--") + chalk.green(`s`))
-                    console.log(chalk.bold(`Ao12: `)+ chalk.magenta(storage.Ao12(current_session)?? "--") + chalk.green(`s`) +
+                    console.log(chalk.bold(`Ao5: `)+ chalk.magenta(current_Ao5 ?? "--") + chalk.green(`s`))
+                    console.log(chalk.bold(`Ao12: `)+ chalk.magenta(current_Ao12 ?? "--") + chalk.green(`s`) +
                     `\n \n`)
                     //check if Ao5/12 are the best 
 

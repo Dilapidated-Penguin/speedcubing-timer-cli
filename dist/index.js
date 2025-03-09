@@ -90,7 +90,6 @@ program
             console.log(chalk_1.default.bgRed(`An error occurred`));
         });
     }
-    //cubeScramble = cube(Number(event), current_settings.scramble_length).toString()
 });
 program
     .command("settings")
@@ -167,7 +166,6 @@ function newSolve(current_settings, event, session_date, option) {
     process.stdout.write("\b \b");
     console.log(stylizeScramble(scramble));
     listener.addListener(function (e, down) {
-        var _a, _b;
         if ((e.name === "D") && (e.state === "DOWN")) {
             const current_session = saved_data.data.get(session_date);
             if (current_session.entries.length >= 1) {
@@ -281,7 +279,11 @@ function newSolve(current_settings, event, session_date, option) {
                         fastest_solve: best_time,
                         slowest_solve: worst_time
                     };
+                    const current_Ao5 = storage.Ao5(current_session);
+                    const current_Ao12 = storage.Ao12(current_session);
                     stats_data.session_data.set(session_date, current_stats);
+                    stats_data.pb_Ao5 = (current_Ao5 < stats_data.pb_Ao5) ? current_Ao5 : stats_data.pb_Ao5;
+                    stats_data.pb_Ao12 = (current_Ao12 < stats_data.pb_Ao12) ? current_Ao12 : stats_data.pb_Ao12;
                     storage.saveStats(stats_data);
                     saved_data.data.set(session_date, current_session);
                     storage.saveData(saved_data);
@@ -290,8 +292,8 @@ function newSolve(current_settings, event, session_date, option) {
                     process.stdout.write("\b \b");
                     console.log(chalk_1.default.bold(`Time: `) + elapsedTime.toFixed(4) + chalk_1.default.green('s') +
                         `\n`);
-                    console.log(chalk_1.default.bold(`Ao5: `) + chalk_1.default.magenta((_a = storage.Ao5(current_session)) !== null && _a !== void 0 ? _a : "--") + chalk_1.default.green(`s`));
-                    console.log(chalk_1.default.bold(`Ao12: `) + chalk_1.default.magenta((_b = storage.Ao12(current_session)) !== null && _b !== void 0 ? _b : "--") + chalk_1.default.green(`s`) +
+                    console.log(chalk_1.default.bold(`Ao5: `) + chalk_1.default.magenta(current_Ao5 !== null && current_Ao5 !== void 0 ? current_Ao5 : "--") + chalk_1.default.green(`s`));
+                    console.log(chalk_1.default.bold(`Ao12: `) + chalk_1.default.magenta(current_Ao12 !== null && current_Ao12 !== void 0 ? current_Ao12 : "--") + chalk_1.default.green(`s`) +
                         `\n \n`);
                     //check if Ao5/12 are the best 
                     if (!option.focusMode) {
