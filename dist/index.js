@@ -49,7 +49,6 @@ var Scrambow = require('scrambow').Scrambow;
 const program = new commander_1.Command();
 var saved_data = storage.loadData();
 //timer variables**********************************
-//process.stdin.setRawMode(true);
 let timer_running = false;
 let startTime = null;
 let space_been_pressed = false;

@@ -1,5 +1,5 @@
 {
-  "name": "cubetimer",
+  "name": "@dilapidated-penguin/cubetimer",
   "version": "1.0.0",
   "description": " fast and lightweight CLI timer for speedcubing. Track your solves, get random scrambles, and analyze your times",
   "main": "dist/index.js",
@@ -11,7 +11,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
-    "Speedcubing",
+    "speedcubing",
     "cli",
     "timer",
     "rubiks",
@@ -20,6 +20,8 @@
   "author": "Makapane Khoza",
   "license": "MIT",
   "type": "commonjs",
+  "repository": "https://github.com/Dilapidated-Penguin/speedcubing-timer-cli",
+  "homepage": "https://github.com/Dilapidated-Penguin/speedcubing-timer-cli#README",
   "dependencies": {
     "@futpib/node-global-key-listener": "^1.0.3",
     "@inquirer/prompts": "^7.3.2",

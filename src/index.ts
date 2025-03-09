@@ -25,8 +25,6 @@ var saved_data = storage.loadData()
 
 //timer variables**********************************
 
-//process.stdin.setRawMode(true);
-
 let timer_running:boolean = false
 
 let startTime:[number,number] | null = null

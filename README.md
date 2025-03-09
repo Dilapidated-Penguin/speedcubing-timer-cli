@@ -12,7 +12,7 @@ A **fast and lightweight CLI timer** for speedcubing. Generate random scrambles 
  - ✅ Session Statistics – Tracks mean, average of 5/12, best/worst times, and standard deviation.
 
 
-<img src="assets/help.png" alt="Help page of the cli" width="500">
+<img src="assets/help.PNG" alt="Help page of the cli" width="500">
 
 ## 📦 Installation
 
@@ -21,12 +21,12 @@ A **fast and lightweight CLI timer** for speedcubing. Generate random scrambles 
 
 ### **Install via npm**
 ```sh
-npm install -g cubetimer
+npm install -g @dilapidated-penguin/cubetimer
 ```
 
 ### **Run in Local Development**
 ```sh
-git clone https://github.com/makapane/cubetimer.git
+git clone https://github.com/Dilapidated-Penguin/speedcubing-timer-cli.git
 cd cubetimer
 npm install
 npm start
@@ -38,11 +38,11 @@ npm start
 ```sh
 cubetimer start
 ```
-Press **spacebar** to start/stop the timer.
+Hold down the **spacebar** to prime the timer, release it to start and tap the **spacebar** again to stop the timer
 
-### **View Solve History**
+### **Change settings**
 ```sh
-cubetimer history
+cubetimer settings
 ```
 
 ## 🔨 Development
@@ -62,5 +62,5 @@ npm run build
 This project is licensed under the **MIT License**.
 
 ---
-🚧 **Note:** This project is very much still in development. Expect frequent updates and new features! 🚀
+🚧 **Note:** This project is very much still in development. Expect updates and new features! 🚀
 
