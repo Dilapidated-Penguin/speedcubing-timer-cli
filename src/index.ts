@@ -1,5 +1,4 @@
 #! /usr/bin/env node
-import figlet from "figlet";
 import chalk, { ChalkInstance } from "chalk";
 import { Command } from "commander";
 
@@ -17,6 +16,7 @@ import * as storage from "./util/storage"
 import  * as settingsUtil from "./util/settings"
 
 var Scrambow = require('scrambow').Scrambow;
+const cfonts = require('cfonts');
 
 const program = new Command();
 
@@ -37,11 +37,17 @@ const listener = new GlobalKeyboardListener();
 //*************************************************
 
 
-console.log(figlet.textSync("cubetimer"))
+cfonts.say('cli timer', {
+	font: 'block',              // define the font face
+	align: 'center',              // define text alignment
+	background: 'transparent',  // define the background color, you can also use `backgroundColor` here as key
+	letterSpacing: 1,           // define letter spacing
+	gradient: ['red','green'],            // define your two gradient colors
+});
+
 program
     .version("1.0.0")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)")
-    .option("-s, --settings","Displays the current global settings for the cli timer")
 
 program
     .command('start')
@@ -83,6 +89,9 @@ program
 
         const settings_list:string[] = Object.keys(current_settings)
         if(setting_to_change === undefined){
+            console.log(chalk.green(`Configure any of the below to some new and preferred value`)) 
+            console.table(current_settings)
+
             select({
                 message: "Select the setting you'd like to alter",
                 choices: settings_list
@@ -101,16 +110,7 @@ program
 
 
 program.parse(process.argv)
-const options = program.opts();
-
-if(options.settings){
-    
-    console.table(settingsUtil.loadSettings())
-    console.log(chalk.italic('Use')
-    + chalk.green(' cubetimer ')
-    + chalk.cyan('settings ')
-    + chalk.italic('to change any of the above'))
-}
+//const options = program.opts();
 
 function updateSetting(current_settings:settings,property:string):void{
     const prompt = (typeof current_settings[property] === 'number') ? number : input
@@ -134,8 +134,13 @@ function startSession(event: string,options:any):void{
     const session = Date.now()
     const session_date = new Date(session)
 
-    console.log(figlet.textSync('session:'))
-    console.log(figlet.textSync(`${session}`))
+    cfonts.say(`session: ${session}`, {
+        font: 'tiny',              // define the font face
+        align: 'center',              // define text alignment
+        colors: ['magenta'],
+        background: 'transparent',  // define the background color, you can also use `backgroundColor` here as key
+        letterSpacing: 1,           // define letter spacing
+    });
 
     const current_settings:settings = settingsUtil.loadSettings()
     //saved_data.data.set(new Date(session_date)
@@ -159,9 +164,9 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
         .get(1)[0]
         .scramble_string
 
-    process.stdout.write("\x1b[2K]")
+    process.stdout.write(`\x1b[2K`)
     console.log(chalk.bold.red(`Scramble:`))
-    process.stdout.write("\b \b")
+    process.stdout.write("\x1b[2K")
     console.log(stylizeScramble(scramble))
     
     listener.addListener(function (e, down) {
@@ -232,6 +237,8 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                 }
             }else{
                 if(e.state === "DOWN"){
+                    new_scramble = false
+
                     const elapsedTime:number = stopTimer()
                     const current_session:sessionLog = saved_data.data.get(session_date)
                     current_session.entries.push({
@@ -288,7 +295,13 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                     storage.saveData(saved_data)
 
                     process.stdout.write("\b \b")
-                    console.log(figlet.textSync(`${elapsedTime.toFixed(2)}s`))
+                    cfonts.say(`${elapsedTime.toFixed(2)}s`, {
+                        font: 'block',              // define the font face
+                        align: 'center',              // define text alignment
+                        colors: ['white'],
+                        background: 'transparent',  // define the background color, you can also use `backgroundColor` here as key
+                        letterSpacing: 1,           // define letter spacing
+                    });
                     process.stdout.write("\b \b")
                     console.log( chalk.bold(`Time: `) +  elapsedTime.toFixed(4) + chalk.green('s') +
                     `\n`);
@@ -331,7 +344,6 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                     timer_running = false
                     startTime = null
                     space_been_pressed = false
-                    new_scramble = false
                 }
             }
         }

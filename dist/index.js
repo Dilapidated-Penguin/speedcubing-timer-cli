@@ -37,7 +37,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const figlet_1 = __importDefault(require("figlet"));
 const chalk_1 = __importDefault(require("chalk"));
 const commander_1 = require("commander");
 const events_json_1 = require("./events.json");
@@ -46,6 +45,7 @@ const prompts_1 = require("@inquirer/prompts");
 const storage = __importStar(require("./util/storage"));
 const settingsUtil = __importStar(require("./util/settings"));
 var Scrambow = require('scrambow').Scrambow;
+const cfonts = require('cfonts');
 const program = new commander_1.Command();
 var saved_data = storage.loadData();
 //timer variables**********************************
@@ -56,11 +56,16 @@ let new_scramble = false;
 const node_global_key_listener_1 = require("@futpib/node-global-key-listener");
 const listener = new node_global_key_listener_1.GlobalKeyboardListener();
 //*************************************************
-console.log(figlet_1.default.textSync("cubetimer"));
+cfonts.say('cli timer', {
+    font: 'block', // define the font face
+    align: 'center', // define text alignment
+    background: 'transparent', // define the background color, you can also use `backgroundColor` here as key
+    letterSpacing: 1, // define letter spacing
+    gradient: ['red', 'green'], // define your two gradient colors
+});
 program
     .version("1.0.0")
-    .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)")
-    .option("-s, --settings", "Displays the current global settings for the cli timer");
+    .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)");
 program
     .command('start')
     .argument('[event]', 'the event you wish to practice', '333')
@@ -98,6 +103,8 @@ program
     let current_settings = settingsUtil.loadSettings();
     const settings_list = Object.keys(current_settings);
     if (setting_to_change === undefined) {
+        console.log(chalk_1.default.green(`Configure any of the below to some new and preferred value`));
+        console.table(current_settings);
         (0, prompts_1.select)({
             message: "Select the setting you'd like to alter",
             choices: settings_list
@@ -115,14 +122,7 @@ program
     }
 });
 program.parse(process.argv);
-const options = program.opts();
-if (options.settings) {
-    console.table(settingsUtil.loadSettings());
-    console.log(chalk_1.default.italic('Use')
-        + chalk_1.default.green(' cubetimer ')
-        + chalk_1.default.cyan('settings ')
-        + chalk_1.default.italic('to change any of the above'));
-}
+//const options = program.opts();
 function updateSetting(current_settings, property) {
     const prompt = (typeof current_settings[property] === 'number') ? prompts_1.number : prompts_1.input;
     prompt({
@@ -142,8 +142,13 @@ function startSession(event, options) {
     console.clear();
     const session = Date.now();
     const session_date = new Date(session);
-    console.log(figlet_1.default.textSync('session:'));
-    console.log(figlet_1.default.textSync(`${session}`));
+    cfonts.say(`session: ${session}`, {
+        font: 'tiny', // define the font face
+        align: 'center', // define text alignment
+        colors: ['magenta'],
+        background: 'transparent', // define the background color, you can also use `backgroundColor` here as key
+        letterSpacing: 1, // define letter spacing
+    });
     const current_settings = settingsUtil.loadSettings();
     //saved_data.data.set(new Date(session_date)
     saved_data.data.set(session_date, storage.newSessionLog(session_date, event));
@@ -161,9 +166,9 @@ function newSolve(current_settings, event, session_date, option) {
         .setLength(current_settings.scramble_length)
         .get(1)[0]
         .scramble_string;
-    process.stdout.write("\x1b[2K]");
+    process.stdout.write(`\x1b[2K`);
     console.log(chalk_1.default.bold.red(`Scramble:`));
-    process.stdout.write("\b \b");
+    process.stdout.write("\x1b[2K");
     console.log(stylizeScramble(scramble));
     listener.addListener(function (e, down) {
         if ((e.name === "D") && (e.state === "DOWN")) {
@@ -234,6 +239,7 @@ function newSolve(current_settings, event, session_date, option) {
             }
             else {
                 if (e.state === "DOWN") {
+                    new_scramble = false;
                     const elapsedTime = stopTimer();
                     const current_session = saved_data.data.get(session_date);
                     current_session.entries.push({
@@ -288,7 +294,13 @@ function newSolve(current_settings, event, session_date, option) {
                     saved_data.data.set(session_date, current_session);
                     storage.saveData(saved_data);
                     process.stdout.write("\b \b");
-                    console.log(figlet_1.default.textSync(`${elapsedTime.toFixed(2)}s`));
+                    cfonts.say(`${elapsedTime.toFixed(2)}s`, {
+                        font: 'block', // define the font face
+                        align: 'center', // define text alignment
+                        colors: ['white'],
+                        background: 'transparent', // define the background color, you can also use `backgroundColor` here as key
+                        letterSpacing: 1, // define letter spacing
+                    });
                     process.stdout.write("\b \b");
                     console.log(chalk_1.default.bold(`Time: `) + elapsedTime.toFixed(4) + chalk_1.default.green('s') +
                         `\n`);
@@ -326,7 +338,6 @@ function newSolve(current_settings, event, session_date, option) {
                     timer_running = false;
                     startTime = null;
                     space_been_pressed = false;
-                    new_scramble = false;
                 }
             }
         }

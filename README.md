@@ -58,6 +58,11 @@ npm run build
 - [`scrambow`](https://www.npmjs.com/package/scrambow) 
     – Scrambow is used for scramble generation and so the question of whether this cli supports an event is implicitly the question of whether scrambow supports the event.
 - [`nice-table`](https://www.npmjs.com/package/nice-table) - for rendering tables in the console with a clean and structured format.
+- [cfonts](https://www.npmjs.com/package/cfonts) - ANSI fonts
+## Known Issues
+🔴 Key listening continues to listen when the window is out of focus
+Description: Key listener used in the timer will continue to the key events even when user is in another window
+Status: ⏳ Work in Progress
 ## 📜 License
 This project is licensed under the **MIT License**.
 
