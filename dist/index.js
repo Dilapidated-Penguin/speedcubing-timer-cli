@@ -183,13 +183,15 @@ function newSolve(current_settings, event, session_date, option) {
                 console.log(chalk_1.default.red(`There exist no entries in the current session to delete`));
             }
         }
-        if ((e.name === "N") && (e.state === "DOWN")) {
-            process.stdout.write('\x1b[2K');
-            listener.kill();
-            new_scramble = true;
-            newSolve(current_settings, event, session_date, option);
+        else if ((e.name === "N") && (e.state === "DOWN")) {
+            if (!new_scramble) {
+                process.stdout.write('\x1b[2K');
+                listener.kill();
+                new_scramble = true;
+                newSolve(current_settings, event, session_date, option);
+            }
         }
-        if ((e.name === "E") && (e.state === "DOWN")) {
+        else if ((e.name === "E") && (e.state === "DOWN")) {
             const current_session = saved_data.data.get(session_date);
             console.log(`\n \n`);
             if (current_session.entries.length >= 1) {
@@ -215,7 +217,7 @@ function newSolve(current_settings, event, session_date, option) {
             }
             console.log(`\n \n`);
         }
-        if ((e.name === "SPACE") && (new_scramble)) {
+        else if ((e.name === "SPACE") && (new_scramble)) {
             if (!timer_running) {
                 if (e.state === "DOWN") {
                     if (!space_been_pressed) {
@@ -340,6 +342,9 @@ function newSolve(current_settings, event, session_date, option) {
                     space_been_pressed = false;
                 }
             }
+        }
+        else {
+            process.stdout.write('\x1b[2K');
         }
     });
 }

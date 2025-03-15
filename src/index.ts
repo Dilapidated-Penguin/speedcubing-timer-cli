@@ -182,13 +182,15 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
             }else{
                 console.log(chalk.red(`There exist no entries in the current session to delete`))
             }
-        }
+        }else
         if((e.name === "N") && (e.state === "DOWN")){
-            process.stdout.write('\x1b[2K');
-            listener.kill()
-            new_scramble = true
-            newSolve(current_settings,event,session_date,option)
-        }
+            if(!new_scramble){
+                process.stdout.write('\x1b[2K');
+                listener.kill()
+                new_scramble = true
+                newSolve(current_settings,event,session_date,option)
+            }
+        }else
         if((e.name === "E") && (e.state === "DOWN")){
             const current_session:sessionLog = saved_data.data.get(session_date)
             console.log(`\n \n`)
@@ -215,7 +217,7 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                 console.log(chalk.red(`There exist no entries in the current session to label`))
             }
             console.log(`\n \n`)
-        }
+        }else
         if((e.name === "SPACE") && (new_scramble)){
             if(!timer_running){
                 if(e.state === "DOWN"){

@@ -61,7 +61,8 @@ npm run build
 - [cfonts](https://www.npmjs.com/package/cfonts) - ANSI fonts
 ## Known Issues
 🔴 Key listening continues to listen when the window is out of focus
-Description: Key listener used in the timer will continue to the key events even when user is in another window
+
+ - Description: Key listener used in the timer will continue to the key events even when user is in another window
 Status: ⏳ Work in Progress
 ## 📜 License
 This project is licensed under the **MIT License**.
