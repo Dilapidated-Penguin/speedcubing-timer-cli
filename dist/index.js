@@ -42,6 +42,7 @@ const commander_1 = require("commander");
 const events_json_1 = require("./events.json");
 const nice_table_1 = require("nice-table");
 const prompts_1 = require("@inquirer/prompts");
+const nodeplotlib_1 = require("nodeplotlib");
 const storage = __importStar(require("./util/storage"));
 const settingsUtil = __importStar(require("./util/settings"));
 var Scrambow = require('scrambow').Scrambow;
@@ -63,9 +64,62 @@ cfonts.say('cli timer', {
     letterSpacing: 1, // define letter spacing
     gradient: ['red', 'green'], // define your two gradient colors
 });
+function normalizeArg(arg) {
+    const aliases = {
+        fastest_solve: ['f', 'b', 'best', 'fast', 'fastest', 'fastest_time'],
+        slowest_solve: ['w', 's', 'worst', 'slow', 'slowest', 'slowest_timer'],
+        session_mean: ['m', 'mean', 'avg', 'average', 'session_mean'],
+        standard_deviation: ['dev', 'standard_deviation', 'std.dev', 'deviation', 'd'],
+        variance: ['var', 'v', 'variance', 'var.']
+    };
+    for (const [key, val] of Object.entries(aliases)) {
+        if ((key === arg) || (val.includes(arg))) {
+            return key;
+        }
+    }
+    return null;
+}
 program
     .version("1.0.0")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)");
+program
+    .command('graph')
+    .argument('<property>', 'desired statistic to graph')
+    .description('generate a graph of a certain stat')
+    .action((property) => {
+    const normalized_property = normalizeArg(property);
+    if (normalized_property !== null) {
+        const session_data = storage.loadStats().session_data;
+        if (session_data.size >= 0) {
+            const x_dates = Array.from(session_data.keys());
+            const y_data = x_dates.map((date) => {
+                return session_data.get(date)[normalized_property];
+            });
+            const data = [
+                {
+                    x: x_dates,
+                    //.map((e)=>{
+                    //    return e.getTime()
+                    //})
+                    y: y_data,
+                    type: 'scatter'
+                }
+            ];
+            (0, nodeplotlib_1.plot)(data);
+        }
+        else {
+            console.log(`error: ` + chalk_1.default.red(`Session data.size === 0`));
+        }
+    }
+    else {
+        console.log(chalk_1.default.red(`${property}`) + ` is not a valid property. Below are the valid values`);
+        console.log("session_mean \n" +
+            "standard_deviation \n" +
+            "variance \n" +
+            "fastest_solve \n" +
+            "slowest_solve");
+    }
+});
 program
     .command('start')
     .argument('[event]', 'the event you wish to practice', '333')
@@ -342,9 +396,6 @@ function newSolve(current_settings, event, session_date, option) {
                     space_been_pressed = false;
                 }
             }
-        }
-        else {
-            process.stdout.write('\x1b[2K');
         }
     });
 }

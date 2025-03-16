@@ -7,6 +7,7 @@ import { createTable } from 'nice-table';
 
 import { select,number, input} from '@inquirer/prompts';
 import {settings, sessionLog, file_data,global_statistics,event_types, session_statistics} from "./util/interfaces"
+import { plot, Plot } from 'nodeplotlib'
 
 import fs, { stat } from 'fs'
 import path from 'path'
@@ -44,10 +45,65 @@ cfonts.say('cli timer', {
 	letterSpacing: 1,           // define letter spacing
 	gradient: ['red','green'],            // define your two gradient colors
 });
-
+function normalizeArg(arg:string):string|null{
+    const aliases = {
+        fastest_solve: ['f','b','best','fast','fastest','fastest_time'],
+        slowest_solve: ['w','s','worst','slow','slowest','slowest_timer'],
+        session_mean: ['m','mean','avg','average','session_mean'],
+        standard_deviation:['dev','standard_deviation','std.dev','deviation','d'],
+        variance:['var','v','variance','var.']
+    }
+    for(const [key,val] of Object.entries(aliases)){
+        if((key === arg) || (val.includes(arg))){
+            return key
+        }
+    }
+    return null
+}
 program
     .version("1.0.0")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)")
+program
+    .command('graph')
+    .argument('<property>','desired statistic to graph')
+    .description('generate a graph of a certain stat')
+    .action((property:string)=>{
+        const normalized_property:string = normalizeArg(property)
+
+        if(normalized_property !== null){
+            const session_data:Map<Date,session_statistics> = storage.loadStats().session_data
+
+            if(session_data.size >=0){
+                const x_dates:Date[] = Array.from(session_data.keys())
+
+                const y_data:number[] = x_dates.map((date:Date)=>{
+                    return session_data.get(date)[normalized_property]
+                })
+                const data: Plot[] = [
+                    {
+                        x:x_dates,
+                        //.map((e)=>{
+                        //    return e.getTime()
+                        //})
+                        y:y_data,
+                        type: 'scatter'
+                    }
+                ]
+
+                plot(data)
+            }else{
+                console.log(`error: ` +chalk.red(`Session data.size === 0`))
+            }
+
+        }else{
+            console.log(chalk.red(`${property}`) + ` is not a valid property. Below are the valid values`)
+            console.log("session_mean \n" +
+            "standard_deviation \n" +
+            "variance \n" +
+            "fastest_solve \n" +
+            "slowest_solve")
+        }
+    })
 
 program
     .command('start')
