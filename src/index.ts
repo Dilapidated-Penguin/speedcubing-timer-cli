@@ -82,9 +82,6 @@ program
                 const data: Plot[] = [
                     {
                         x:x_dates,
-                        //.map((e)=>{
-                        //    return e.getTime()
-                        //})
                         y:y_data,
                         type: 'scatter'
                     }
@@ -220,14 +217,14 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
         .get(1)[0]
         .scramble_string
 
-    process.stdout.write(`\x1b[2K`)
+    process.stdout.write(`\x1b[2K\r`)
     console.log(chalk.bold.red(`Scramble:`))
     process.stdout.write("\x1b[2K")
     console.log(stylizeScramble(scramble))
     
     listener.addListener(function (e, down) {
         
-        if((e.name === "D") && (e.state === "DOWN")){
+        if((e.name === "D") && (e.state === "UP") && (!new_scramble)){
             const current_session:sessionLog = saved_data.data.get(session_date)
             if(current_session.entries.length>=1){
                 current_session.entries.pop()
@@ -238,16 +235,20 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
             }else{
                 console.log(chalk.red(`There exist no entries in the current session to delete`))
             }
-        }else
-        if((e.name === "N") && (e.state === "DOWN")){
+            return 
+        }
+        if((e.name === "N") && (e.state === "UP")){
             if(!new_scramble){
                 process.stdout.write('\x1b[2K');
                 listener.kill()
                 new_scramble = true
                 newSolve(current_settings,event,session_date,option)
             }
-        }else
-        if((e.name === "E") && (e.state === "DOWN")){
+            return
+        }
+        //process.stdout.write('\x1b[2K\r');
+
+        if((e.name === "E") && (e.state === "UP") && (!new_scramble)){
             const current_session:sessionLog = saved_data.data.get(session_date)
             console.log(`\n \n`)
             if(current_session.entries.length>=1){
@@ -273,7 +274,8 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                 console.log(chalk.red(`There exist no entries in the current session to label`))
             }
             console.log(`\n \n`)
-        }else
+            return
+        }
         if((e.name === "SPACE") && (new_scramble)){
             if(!timer_running){
                 if(e.state === "DOWN"){
@@ -404,7 +406,8 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                     space_been_pressed = false
                 }
             }
-        }
+            return
+        } 
     });
 }
 function stopTimer():number{

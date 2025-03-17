@@ -64,6 +64,9 @@ npm run build
 
  - Description: Key listener used in the timer will continue to the key events even when user is in another window
 Status: ⏳ Work in Progress
+🔴 Solve Labelling 
+ - Description: Pressing e in solve mode multiple times will make multiple prompts to label the last solve
+Status: ⏳ Work in Progress
 ## 📜 License
 This project is licensed under the **MIT License**.
 

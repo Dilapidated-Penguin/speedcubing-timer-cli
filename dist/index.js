@@ -98,9 +98,6 @@ program
             const data = [
                 {
                     x: x_dates,
-                    //.map((e)=>{
-                    //    return e.getTime()
-                    //})
                     y: y_data,
                     type: 'scatter'
                 }
@@ -220,12 +217,12 @@ function newSolve(current_settings, event, session_date, option) {
         .setLength(current_settings.scramble_length)
         .get(1)[0]
         .scramble_string;
-    process.stdout.write(`\x1b[2K`);
+    process.stdout.write(`\x1b[2K\r`);
     console.log(chalk_1.default.bold.red(`Scramble:`));
     process.stdout.write("\x1b[2K");
     console.log(stylizeScramble(scramble));
     listener.addListener(function (e, down) {
-        if ((e.name === "D") && (e.state === "DOWN")) {
+        if ((e.name === "D") && (e.state === "UP") && (!new_scramble)) {
             const current_session = saved_data.data.get(session_date);
             if (current_session.entries.length >= 1) {
                 current_session.entries.pop();
@@ -236,16 +233,19 @@ function newSolve(current_settings, event, session_date, option) {
             else {
                 console.log(chalk_1.default.red(`There exist no entries in the current session to delete`));
             }
+            return;
         }
-        else if ((e.name === "N") && (e.state === "DOWN")) {
+        if ((e.name === "N") && (e.state === "UP")) {
             if (!new_scramble) {
                 process.stdout.write('\x1b[2K');
                 listener.kill();
                 new_scramble = true;
                 newSolve(current_settings, event, session_date, option);
             }
+            return;
         }
-        else if ((e.name === "E") && (e.state === "DOWN")) {
+        //process.stdout.write('\x1b[2K\r');
+        if ((e.name === "E") && (e.state === "UP") && (!new_scramble)) {
             const current_session = saved_data.data.get(session_date);
             console.log(`\n \n`);
             if (current_session.entries.length >= 1) {
@@ -270,8 +270,9 @@ function newSolve(current_settings, event, session_date, option) {
                 console.log(chalk_1.default.red(`There exist no entries in the current session to label`));
             }
             console.log(`\n \n`);
+            return;
         }
-        else if ((e.name === "SPACE") && (new_scramble)) {
+        if ((e.name === "SPACE") && (new_scramble)) {
             if (!timer_running) {
                 if (e.state === "DOWN") {
                     if (!space_been_pressed) {
@@ -396,6 +397,7 @@ function newSolve(current_settings, event, session_date, option) {
                     space_been_pressed = false;
                 }
             }
+            return;
         }
     });
 }
