@@ -61,9 +61,9 @@ npm run build
 - [cfonts](https://www.npmjs.com/package/cfonts) - ANSI fonts
 ## Known Issues
 🔴 Key listening continues to listen when the window is out of focus
-
  - Description: Key listener used in the timer will continue to the key events even when user is in another window
-Status: ⏳ Work in Progress
+Status: ✅ Fixed in v1.0.6
+
 🔴 Solve Labelling 
  - Description: Pressing e in solve mode multiple times will make multiple prompts to label the last solve
 Status: ⏳ Work in Progress

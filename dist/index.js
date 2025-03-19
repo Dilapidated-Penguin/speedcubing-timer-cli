@@ -40,6 +40,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const chalk_1 = __importDefault(require("chalk"));
 const commander_1 = require("commander");
 const events_json_1 = require("./events.json");
+const get_windows_1 = require("get-windows");
 const nice_table_1 = require("nice-table");
 const prompts_1 = require("@inquirer/prompts");
 const nodeplotlib_1 = require("nodeplotlib");
@@ -49,11 +50,14 @@ var Scrambow = require('scrambow').Scrambow;
 const cfonts = require('cfonts');
 const program = new commander_1.Command();
 var saved_data = storage.loadData();
+//main_window_id
+let main_window_id = null;
 //timer variables**********************************
 let timer_running = false;
 let startTime = null;
 let space_been_pressed = false;
 let new_scramble = false;
+let solve_labelled = false;
 const node_global_key_listener_1 = require("@futpib/node-global-key-listener");
 const listener = new node_global_key_listener_1.GlobalKeyboardListener();
 //*************************************************
@@ -80,12 +84,17 @@ function normalizeArg(arg) {
     return null;
 }
 program
-    .version("1.0.0")
+    .version("1.0.6")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)");
 program
     .command('graph')
     .argument('<property>', 'desired statistic to graph')
-    .description('generate a graph of a certain stat')
+    .description(`generate a graph of one of the below stats: \n
+    session_mean \n
+    standard_deviation \n
+    variance \n 
+    fastest_solve \n
+    slowest_solve`)
     .action((property) => {
     const normalized_property = normalizeArg(property);
     if (normalized_property !== null) {
@@ -120,7 +129,8 @@ program
 program
     .command('start')
     .argument('[event]', 'the event you wish to practice', '333')
-    .option('-f, --focusMode', '')
+    .option('-f, --focusMode', 'Displays only the most important stats')
+    .option('-w', '--window', 'Opens a second command prompt window to display the informationa and stats related to the solve')
     .description('Begin a session of practicing a certain event')
     .action((event, options) => {
     console.log(event);
@@ -190,6 +200,7 @@ function validEvent(event_to_check) {
     return (events_json_1.events_list.indexOf(event_to_check) !== -1);
 }
 function startSession(event, options) {
+    main_window_id = (0, get_windows_1.activeWindowSync)().id;
     console.clear();
     const session = Date.now();
     const session_date = new Date(session);
@@ -222,6 +233,9 @@ function newSolve(current_settings, event, session_date, option) {
     process.stdout.write("\x1b[2K");
     console.log(stylizeScramble(scramble));
     listener.addListener(function (e, down) {
+        if ((0, get_windows_1.activeWindowSync)().id !== main_window_id) {
+            return;
+        }
         if ((e.name === "D") && (e.state === "UP") && (!new_scramble)) {
             const current_session = saved_data.data.get(session_date);
             if (current_session.entries.length >= 1) {
@@ -240,37 +254,44 @@ function newSolve(current_settings, event, session_date, option) {
                 process.stdout.write('\x1b[2K');
                 listener.kill();
                 new_scramble = true;
+                solve_labelled = false;
                 newSolve(current_settings, event, session_date, option);
             }
             return;
         }
-        //process.stdout.write('\x1b[2K\r');
         if ((e.name === "E") && (e.state === "UP") && (!new_scramble)) {
-            const current_session = saved_data.data.get(session_date);
-            console.log(`\n \n`);
-            if (current_session.entries.length >= 1) {
-                (0, prompts_1.select)({
-                    message: `Select the label for the previous solve`,
-                    choices: [
-                        '+3',
-                        'DNF',
-                        'OK'
-                    ]
-                }).then((answer) => {
-                    current_session.entries.at(-1).label = answer;
-                    saved_data.data.set(session_date, current_session);
-                    storage.saveData(saved_data);
-                    console.log(chalk_1.default.green(`Last solve labelled ${answer}`));
-                    console.log(chalk_1.default.bold.magentaBright(`Whenever ready use the spacebar to start a new solve`));
-                }).catch((err) => {
-                    console.log(chalk_1.default.red(`An error has occurred`));
-                });
+            if (!solve_labelled) {
+                solve_labelled = true;
+                const current_session = saved_data.data.get(session_date);
+                console.log(`\n \n`);
+                if (current_session.entries.length >= 1) {
+                    (0, prompts_1.select)({
+                        message: `Select the label for the previous solve`,
+                        choices: [
+                            '+3',
+                            'DNF',
+                            'OK'
+                        ]
+                    }).then((answer) => {
+                        current_session.entries.at(-1).label = answer;
+                        saved_data.data.set(session_date, current_session);
+                        storage.saveData(saved_data);
+                        console.log(chalk_1.default.green(`Last solve labelled ${answer}`));
+                        console.log(chalk_1.default.bold.magentaBright(`Whenever ready use the spacebar to start a new solve`));
+                    }).catch((err) => {
+                        console.log(chalk_1.default.red(`An error has occurred`));
+                    });
+                }
+                else {
+                    console.log(chalk_1.default.redBright(`There exist no entries in the current session to label`));
+                }
+                console.log(`\n \n`);
+                return;
             }
             else {
-                console.log(chalk_1.default.red(`There exist no entries in the current session to label`));
+                console.log(chalk_1.default.redBright(`The solve has already been labelled.`));
+                return;
             }
-            console.log(`\n \n`);
-            return;
         }
         if ((e.name === "SPACE") && (new_scramble)) {
             if (!timer_running) {
@@ -397,6 +418,7 @@ function newSolve(current_settings, event, session_date, option) {
                     space_been_pressed = false;
                 }
             }
+            process.stdout.write('\x1b[2K\r');
             return;
         }
     });
