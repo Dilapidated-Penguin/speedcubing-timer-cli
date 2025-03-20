@@ -1,25 +1,24 @@
 #! /usr/bin/env node
 import chalk, { ChalkInstance } from "chalk";
 import { Command } from "commander";
-
+import fs from 'fs'
 import {event_choices,events_list} from './events.json'
 
 import {activeWindow,activeWindowSync} from 'get-windows';
 import { createTable } from 'nice-table';
 
 import { select,number, input} from '@inquirer/prompts';
-import {settings, sessionLog, file_data,global_statistics,event_types, session_statistics} from "./util/interfaces"
 import { plot, Plot } from 'nodeplotlib'
+import { spawn } from 'child_process';
 
-import fs, { stat } from 'fs'
-import path from 'path'
-
-
+import {settings, sessionLog, file_data,global_statistics,event_types, session_statistics} from "./util/interfaces"
 import * as storage from "./util/storage"
 import  * as settingsUtil from "./util/settings"
-
+import path from 'path'
 var Scrambow = require('scrambow').Scrambow;
 const cfonts = require('cfonts');
+
+import {string as cli_title_string} from './cli-title.json'
 
 const program = new Command();
 
@@ -38,17 +37,20 @@ let new_scramble:boolean = false
 let solve_labelled:boolean = false
 
 import {GlobalKeyboardListener} from "@futpib/node-global-key-listener";
+
 const listener = new GlobalKeyboardListener();
 //*************************************************
 
 
-cfonts.say('cli timer', {
-	font: 'block',              // define the font face
-	align: 'center',              // define text alignment
-	background: 'transparent',  // define the background color, you can also use `backgroundColor` here as key
-	letterSpacing: 1,           // define letter spacing
-	gradient: ['red','green'],            // define your two gradient colors
-});
+//const cli_title = cfonts.render('cli timer', {
+//	font: 'block',              // define the font face
+//	align: 'center',              // define text alignment
+//	background: 'transparent',  // define the background color, you can also use `backgroundColor` here as key
+//	letterSpacing: 1,           // define letter spacing
+//	gradient: ['red','green'],            // define your two gradient colors
+//});
+
+console.log(cli_title_string)
 function normalizeArg(arg:string):string|null{
     const aliases = {
         fastest_solve: ['f','b','best','fast','fastest','fastest_time'],
@@ -208,7 +210,6 @@ function startSession(event: string,options:any):void{
     });
 
     const current_settings:settings = settingsUtil.loadSettings()
-    //saved_data.data.set(new Date(session_date)
     
     saved_data.data.set(session_date,storage.newSessionLog(session_date,event))
     saved_data.last_accessed_log = session_date
@@ -216,10 +217,21 @@ function startSession(event: string,options:any):void{
     storage.saveData(saved_data)
     new_scramble = true
     listener.kill()
+
+    if (options.window || options.w) {
+        const scriptPath = path.join(__dirname, 'window.js');
+    
+        const cmd = spawn('cmd.exe', ['/K', `node ${scriptPath} ${session_date}`], { stdio: 'pipe' });
+    
+        cmd.on('error', (err) => console.error(`Process error: ${err.message}`));
+        cmd.stdout.on('data', (data) => console.log(`Output: ${data}`));
+        cmd.stderr.on('data', (data) => console.error(`Error: ${data}`));
+    }
     newSolve(current_settings,event,session_date,options)
 }
 
 function newSolve(current_settings:settings,event: string,session_date:Date,option:any):void{
+
     var scramble_generator = new Scrambow()
     process.stdin.resume();
 

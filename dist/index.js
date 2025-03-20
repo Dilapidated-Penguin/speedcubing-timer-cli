@@ -44,10 +44,13 @@ const get_windows_1 = require("get-windows");
 const nice_table_1 = require("nice-table");
 const prompts_1 = require("@inquirer/prompts");
 const nodeplotlib_1 = require("nodeplotlib");
+const child_process_1 = require("child_process");
 const storage = __importStar(require("./util/storage"));
 const settingsUtil = __importStar(require("./util/settings"));
+const path_1 = __importDefault(require("path"));
 var Scrambow = require('scrambow').Scrambow;
 const cfonts = require('cfonts');
+const cli_title_json_1 = require("./cli-title.json");
 const program = new commander_1.Command();
 var saved_data = storage.loadData();
 //main_window_id
@@ -61,13 +64,14 @@ let solve_labelled = false;
 const node_global_key_listener_1 = require("@futpib/node-global-key-listener");
 const listener = new node_global_key_listener_1.GlobalKeyboardListener();
 //*************************************************
-cfonts.say('cli timer', {
-    font: 'block', // define the font face
-    align: 'center', // define text alignment
-    background: 'transparent', // define the background color, you can also use `backgroundColor` here as key
-    letterSpacing: 1, // define letter spacing
-    gradient: ['red', 'green'], // define your two gradient colors
-});
+//const cli_title = cfonts.render('cli timer', {
+//	font: 'block',              // define the font face
+//	align: 'center',              // define text alignment
+//	background: 'transparent',  // define the background color, you can also use `backgroundColor` here as key
+//	letterSpacing: 1,           // define letter spacing
+//	gradient: ['red','green'],            // define your two gradient colors
+//});
+console.log(cli_title_json_1.string);
 function normalizeArg(arg) {
     const aliases = {
         fastest_solve: ['f', 'b', 'best', 'fast', 'fastest', 'fastest_time'],
@@ -212,12 +216,18 @@ function startSession(event, options) {
         letterSpacing: 1, // define letter spacing
     });
     const current_settings = settingsUtil.loadSettings();
-    //saved_data.data.set(new Date(session_date)
     saved_data.data.set(session_date, storage.newSessionLog(session_date, event));
     saved_data.last_accessed_log = session_date;
     storage.saveData(saved_data);
     new_scramble = true;
     listener.kill();
+    if (options.window || options.w) {
+        const scriptPath = path_1.default.join(__dirname, 'window.js');
+        const cmd = (0, child_process_1.spawn)('cmd.exe', ['/K', `node ${scriptPath} ${session_date}`], { stdio: 'pipe' });
+        cmd.on('error', (err) => console.error(`Process error: ${err.message}`));
+        cmd.stdout.on('data', (data) => console.log(`Output: ${data}`));
+        cmd.stderr.on('data', (data) => console.error(`Error: ${data}`));
+    }
     newSolve(current_settings, event, session_date, options);
 }
 function newSolve(current_settings, event, session_date, option) {
