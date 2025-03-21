@@ -3,7 +3,7 @@ import path from 'path';
 import { parse } from 'path/posix';
 import { fileURLToPath } from 'url';
 
-import {sessionLog, file_data,global_statistics, session_statistics} from "./interfaces"
+import {sessionLog, file_data,global_statistics, session_statistics, SolveInstance} from "./interfaces"
 
 const DATA_FILE = path.join(__dirname, './data.json');
 const STAT_FILE = path.join(__dirname,'./stats.json')
@@ -106,7 +106,7 @@ export function retrieveAverageOver(average_num:number, date:Date|null = null):n
     }
 }
 
-export function Ao5(session:sessionLog):number{
+export function Ao5(session:sessionLog ):number{
     return averageOf(5,session,remove_extremes)
 }
 
@@ -121,7 +121,6 @@ export function averageOf(average_num:number, session:sessionLog,filter_process:
     if(!fs.existsSync(DATA_FILE)){
         return null
     }else{
-        
         if(session.entries.length <=average_num){
             return null
         }else{

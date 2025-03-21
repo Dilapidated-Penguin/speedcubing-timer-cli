@@ -46,18 +46,23 @@ const DATA_FILE = path_1.default.join(__dirname, "./util/data.json");
 const STATS_FILE = path_1.default.join(__dirname, "./util/stats.json");
 let stored_data = storage.loadData();
 let global_stats = storage.loadStats();
-let current_session_data = stored_data.data.get(session_date);
-let a;
+let info_table = null;
 function updateInfo() {
-    current_session_data = stored_data.data.get(session_date);
+    let current_session_data = stored_data.data.get(session_date);
+    let current_session_stats = global_stats.session_data.get(session_date);
+    //display
     console.clear();
     console.log(`session: ${chalk_1.default.bgBlueBright(session_date)}`);
-    (0, nice_table_1.createTable)(current_session_data.entries.map((instance, index) => {
-        return {
-            time: instance.time,
-            Label: instance.label
-        };
-    }), ['time', 'Label']);
+    if (current_session_data.entries !== undefined) {
+        info_table = current_session_data.entries.map((instance, index) => {
+            return {
+                n: index,
+                time: instance.time,
+                label: instance.label,
+            };
+        });
+        (0, nice_table_1.createTable)(info_table, ['n', 'time', 'label']);
+    }
 }
 fs_1.default.watch(DATA_FILE, (eventType, filename) => {
     if (eventType === 'change') {
