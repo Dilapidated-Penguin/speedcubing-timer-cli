@@ -18,7 +18,7 @@ export function loadStats():global_statistics{
         }
     }else{
         const parsed:global_statistics = JSON.parse(fs.readFileSync(STAT_FILE, 'utf-8'))
-        const restored_data = new Map<Date,session_statistics>(parsed.session_data)
+        const restored_data = new Map<string,session_statistics>(parsed.session_data)
         return {
             session_data:restored_data,
             pb_Ao12:parsed.pb_Ao12,
@@ -38,7 +38,7 @@ export function saveStats(data:global_statistics):void {
 export function newSessionLog(session_date:Date,event:string|null = null):sessionLog{
     return {
         entries: [],
-        date: session_date,
+        date: session_date.toISOString(),
         date_formatted:`${session_date.getFullYear()}-${(session_date.getMonth() + 1)
             .toString()
             .padStart(2, "0")}-${session_date.getDate().toString().padStart(2, "0")} ${session_date
@@ -55,19 +55,21 @@ export function newSessionLog(session_date:Date,event:string|null = null):sessio
 export function loadData(): file_data {
   if (!fs.existsSync(DATA_FILE)) {
     let date_now:Date = new Date(Date.now())
+    const date_ISO:string = date_now.toISOString()
+
     let val:sessionLog = newSessionLog(date_now);
 
-    var Storage = new Map<Date,sessionLog>([
-        [date_now,val]
+    var Storage = new Map<string,sessionLog>([
+        [date_ISO,val]
     ])
 
     return {
         data: Storage,
-        last_accessed_log: date_now
+        last_accessed_log: date_ISO
     }
   }
   const parsed = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'))
-  const restored_data = new Map<Date,sessionLog>(parsed.data)
+  const restored_data = new Map<string,sessionLog>(parsed.data)
   return {
       data:restored_data,
       last_accessed_log:parsed.last_accessed_log
@@ -75,7 +77,7 @@ export function loadData(): file_data {
 }
 
 export function saveData(data: file_data): void {
-    const session_array:[Date,sessionLog][] = [...data.data]
+    const session_array:[string,sessionLog][] = [...data.data]
     
     fs.writeFileSync(DATA_FILE, JSON.stringify( {
         data:session_array,
@@ -89,7 +91,7 @@ export function retrieveAverageOver(average_num:number, date:Date|null = null):n
     }else{
 
         const file_data = loadData()
-        const session_date = date ?? file_data.last_accessed_log
+        const session_date:string = date.toISOString() ?? file_data.last_accessed_log
         if(file_data.data.size < average_num){
             return null
         }else{

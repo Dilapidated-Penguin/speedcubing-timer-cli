@@ -7,13 +7,13 @@ export interface SolveInstance {
 }
 export interface sessionLog {
     entries: SolveInstance[];
-    date: Date;
+    date: string;
     date_formatted : string;
     event: string |null;
 }
 export interface file_data {
-    data: Map<Date,sessionLog>;
-    last_accessed_log: Date;
+    data: Map<string,sessionLog>;
+    last_accessed_log: string;
 }
 //######################
 export interface session_statistics {
@@ -25,7 +25,7 @@ export interface session_statistics {
 }
 
 export interface global_statistics {
-    session_data: Map<Date,session_statistics>;
+    session_data: Map<string,session_statistics>;
     pb_time: number | null;
     pb_Ao5:number | null;
     pb_Ao12:number | null;

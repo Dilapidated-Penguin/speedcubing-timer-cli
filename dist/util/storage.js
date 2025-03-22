@@ -48,7 +48,7 @@ function saveStats(data) {
 function newSessionLog(session_date, event = null) {
     return {
         entries: [],
-        date: session_date,
+        date: session_date.toISOString(),
         date_formatted: `${session_date.getFullYear()}-${(session_date.getMonth() + 1)
             .toString()
             .padStart(2, "0")}-${session_date.getDate().toString().padStart(2, "0")} ${session_date
@@ -64,13 +64,14 @@ function newSessionLog(session_date, event = null) {
 function loadData() {
     if (!fs_1.default.existsSync(DATA_FILE)) {
         let date_now = new Date(Date.now());
+        const date_ISO = date_now.toISOString();
         let val = newSessionLog(date_now);
         var Storage = new Map([
-            [date_now, val]
+            [date_ISO, val]
         ]);
         return {
             data: Storage,
-            last_accessed_log: date_now
+            last_accessed_log: date_ISO
         };
     }
     const parsed = JSON.parse(fs_1.default.readFileSync(DATA_FILE, 'utf-8'));
@@ -88,12 +89,13 @@ function saveData(data) {
     }, null, 2));
 }
 function retrieveAverageOver(average_num, date = null) {
+    var _a;
     if (!fs_1.default.existsSync(DATA_FILE)) {
         return null;
     }
     else {
         const file_data = loadData();
-        const session_date = date !== null && date !== void 0 ? date : file_data.last_accessed_log;
+        const session_date = (_a = date.toISOString()) !== null && _a !== void 0 ? _a : file_data.last_accessed_log;
         if (file_data.data.size < average_num) {
             return null;
         }

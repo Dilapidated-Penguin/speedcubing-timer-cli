@@ -36,7 +36,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const session_date = new Date(process.argv[0]);
+const session_date = process.argv[2];
 const storage = __importStar(require("./util/storage"));
 const chalk_1 = __importDefault(require("chalk"));
 const nice_table_1 = require("nice-table");
@@ -46,23 +46,34 @@ const DATA_FILE = path_1.default.join(__dirname, "./util/data.json");
 const STATS_FILE = path_1.default.join(__dirname, "./util/stats.json");
 let stored_data = storage.loadData();
 let global_stats = storage.loadStats();
-let info_table = null;
+let ao5_list = [];
+let ao12_list = [];
 function updateInfo() {
     let current_session_data = stored_data.data.get(session_date);
+    console.log(session_date);
+    console.log(current_session_data);
+    ao5_list.push(storage.Ao5(current_session_data));
+    ao12_list.push(storage.Ao12(current_session_data));
     let current_session_stats = global_stats.session_data.get(session_date);
     //display
     console.clear();
     console.log(`session: ${chalk_1.default.bgBlueBright(session_date)}`);
-    if (current_session_data.entries !== undefined) {
-        info_table = current_session_data.entries.map((instance, index) => {
-            return {
-                n: index,
-                time: instance.time,
-                label: instance.label,
-            };
-        });
-        (0, nice_table_1.createTable)(info_table, ['n', 'time', 'label']);
-    }
+    let info_table = current_session_data.entries.map((instance, index) => {
+        var _a, _b, _c;
+        return {
+            n: index,
+            time: instance.time,
+            label: (_a = instance.label) !== null && _a !== void 0 ? _a : chalk_1.default.green('OK'),
+            ao5: (_b = ao5_list[index]) !== null && _b !== void 0 ? _b : '-',
+            ao12: (_c = ao12_list[index]) !== null && _c !== void 0 ? _c : '-'
+        };
+    });
+    console.log(`\n`);
+    console.log((0, nice_table_1.createTable)(info_table, ['n', 'time', 'label', 'ao5', 'ao12']));
+    console.log(Object.keys(current_session_stats).map((key_name) => {
+        return `${key_name}: ${current_session_stats[key_name].toFixed(3)} ${chalk_1.default.green('s')}`;
+    })
+        .join(chalk_1.default.blue('\n')));
 }
 fs_1.default.watch(DATA_FILE, (eventType, filename) => {
     if (eventType === 'change') {

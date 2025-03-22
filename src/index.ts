@@ -82,13 +82,16 @@ program
         const normalized_property:string = normalizeArg(property)
 
         if(normalized_property !== null){
-            const session_data:Map<Date,session_statistics> = storage.loadStats().session_data
+            const session_data:Map<string,session_statistics> = storage.loadStats().session_data
 
             if(session_data.size >=0){
                 const x_dates:Date[] = Array.from(session_data.keys())
+                    .map((ISO_date)=>{
+                        return new Date(ISO_date)
+                    })
 
                 const y_data:number[] = x_dates.map((date:Date)=>{
-                    return session_data.get(date)[normalized_property]
+                    return session_data.get(date.toISOString())[normalized_property]
                 })
                 const data: Plot[] = [
                     {
@@ -200,7 +203,7 @@ function startSession(event: string,options:any):void{
     console.clear()
     const session = Date.now()
     const session_date = new Date(session)
-
+    const session_date_ISO = session_date.toISOString()
     cfonts.say(`session: ${session}`, {
         font: 'tiny',              // define the font face
         align: 'center',              // define text alignment
@@ -211,27 +214,31 @@ function startSession(event: string,options:any):void{
 
     const current_settings:settings = settingsUtil.loadSettings()
     
-    saved_data.data.set(session_date,storage.newSessionLog(session_date,event))
-    saved_data.last_accessed_log = session_date
-
+    saved_data.data.set(session_date_ISO,storage.newSessionLog(session_date,event))
+    saved_data.last_accessed_log = session_date_ISO
+    console.log(session_date)
+    console.log(saved_data.data)
     storage.saveData(saved_data)
     new_scramble = true
     listener.kill()
 
     if (options.window || options.w) {
         const scriptPath = path.join(__dirname, 'window.js');
-    
-        const cmd = spawn('cmd.exe', ['/K', `node ${scriptPath} ${session_date}`], { stdio: 'pipe' });
-    
+        
+        const cmd = spawn('cmd.exe', ['/K', `start cmd /K node ${scriptPath} ${session_date.toISOString()}`], {
+            detached: true,
+            stdio: 'ignore',
+            windowsHide: false
+          });
+        
+        cmd.unref(); // Allow the parent process to exit without waiting for this new process
         cmd.on('error', (err) => console.error(`Process error: ${err.message}`));
-        cmd.stdout.on('data', (data) => console.log(`Output: ${data}`));
-        cmd.stderr.on('data', (data) => console.error(`Error: ${data}`));
     }
     newSolve(current_settings,event,session_date,options)
 }
 
 function newSolve(current_settings:settings,event: string,session_date:Date,option:any):void{
-
+    const session_date_ISO:string = session_date.toISOString()
     var scramble_generator = new Scrambow()
     process.stdin.resume();
 
@@ -252,12 +259,12 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
         }
 
         if((e.name === "D") && (e.state === "UP") && (!new_scramble)){
-            const current_session:sessionLog = saved_data.data.get(session_date)
+            const current_session:sessionLog = saved_data.data.get(session_date_ISO)
             if(current_session.entries.length>=1){
                 current_session.entries.pop()
                 console.log(chalk.blue(`Last solve deleted`))
 
-                saved_data.data.set(session_date,current_session)
+                saved_data.data.set(session_date_ISO,current_session)
                 storage.saveData(saved_data)
             }else{
                 console.log(chalk.red(`There exist no entries in the current session to delete`))
@@ -278,7 +285,7 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
         if((e.name === "E") && (e.state === "UP") && (!new_scramble)){
             if(!solve_labelled){
                 solve_labelled = true
-                const current_session:sessionLog = saved_data.data.get(session_date)
+                const current_session:sessionLog = saved_data.data.get(session_date_ISO)
                 console.log(`\n \n`)
                 if(current_session.entries.length>=1){    
                     select({
@@ -291,7 +298,7 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                     }).then((answer:string)=>{
                         current_session.entries.at(-1).label = answer
 
-                        saved_data.data.set(session_date,current_session)
+                        saved_data.data.set(session_date_ISO,current_session)
                         storage.saveData(saved_data)
 
                         console.log(chalk.green(`Last solve labelled ${answer}`))
@@ -335,7 +342,7 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                     new_scramble = false
 
                     const elapsedTime:number = stopTimer()
-                    const current_session:sessionLog = saved_data.data.get(session_date)
+                    const current_session:sessionLog = saved_data.data.get(session_date_ISO)
                     current_session.entries.push({
                         scramble: scramble,
                         time: elapsedTime,
@@ -382,11 +389,13 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                     const current_Ao5:number = storage.Ao5(current_session)
                     const current_Ao12:number = storage.Ao12(current_session)
 
-                    stats_data.session_data.set(session_date,current_stats)
+                    stats_data.session_data.set(session_date_ISO,current_stats)
+
                     stats_data.pb_Ao5 = (current_Ao5<stats_data.pb_Ao5) ? current_Ao5 : stats_data.pb_Ao5
                     stats_data.pb_Ao12 = (current_Ao12<stats_data.pb_Ao12) ? current_Ao12 : stats_data.pb_Ao12
+
                     storage.saveStats(stats_data)
-                    saved_data.data.set(session_date,current_session)
+                    saved_data.data.set(session_date_ISO,current_session)
                     storage.saveData(saved_data)
 
                     process.stdout.write("\b \b")
@@ -406,7 +415,7 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                     `\n \n`)
                     //check if Ao5/12 are the best 
 
-                    if(!option.focusMode){
+                    if((!option.focusMode || option.f) && !(option.w || option.window)){
                         //solves
                         console.table(createTable(current_session.entries.map((instance)=>{
                             return {
