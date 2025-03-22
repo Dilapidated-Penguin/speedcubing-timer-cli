@@ -67,7 +67,7 @@ function normalizeArg(arg:string):string|null{
     return null
 }
 program
-    .version("1.0.6")
+    .version("1.0.9")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)")
 program
     .command('graph')
