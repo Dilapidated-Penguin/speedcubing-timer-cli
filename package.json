@@ -1,6 +1,6 @@
 {
   "name": "@dilapidated-penguin/cubetimer",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": " fast and lightweight CLI timer for speedcubing. Track your solves, get random scrambles, and analyze your times",
   "main": "dist/index.js",
   "bin": {
