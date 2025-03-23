@@ -59,13 +59,15 @@ function updateInfo() {
     console.clear();
     console.log(`session: ${chalk_1.default.bgBlueBright(session_date)}`);
     let info_table = current_session_data.entries.map((instance, index) => {
-        var _a, _b, _c;
+        var _a, _b;
+        const label = (instance.label === "DNF") ? chalk_1.default.red(instance.label) : chalk_1.default.yellow(instance.label);
+        const time = (instance.time === current_session_stats.fastest_solve) ? chalk_1.default.blue(instance.time) : instance.time;
         return {
-            n: index,
-            time: instance.time,
-            label: (_a = instance.label) !== null && _a !== void 0 ? _a : chalk_1.default.green('OK'),
-            ao5: (_b = ao5_list[index]) !== null && _b !== void 0 ? _b : '-',
-            ao12: (_c = ao12_list[index]) !== null && _c !== void 0 ? _c : '-'
+            n: index + 1,
+            time: time,
+            label: label !== null && label !== void 0 ? label : chalk_1.default.green('OK'),
+            ao5: (_a = ao5_list[index]) !== null && _a !== void 0 ? _a : '-',
+            ao12: (_b = ao12_list[index]) !== null && _b !== void 0 ? _b : '-'
         };
     });
     console.log(`\n`);

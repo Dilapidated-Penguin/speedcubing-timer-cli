@@ -450,9 +450,9 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                     space_been_pressed = false
                 }
             }
-            process.stdout.write('\x1b[2K\r');
             return
         } 
+        process.stdout.write('\x1b[2K\r');
     });
 }
 function stopTimer():number{

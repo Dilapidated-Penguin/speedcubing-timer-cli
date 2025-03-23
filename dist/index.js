@@ -88,7 +88,7 @@ function normalizeArg(arg) {
     return null;
 }
 program
-    .version("1.0.6")
+    .version("1.0.9")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)");
 program
     .command('graph')
@@ -438,9 +438,9 @@ function newSolve(current_settings, event, session_date, option) {
                     space_been_pressed = false;
                 }
             }
-            process.stdout.write('\x1b[2K\r');
             return;
         }
+        process.stdout.write('\x1b[2K\r');
     });
 }
 function stopTimer() {
