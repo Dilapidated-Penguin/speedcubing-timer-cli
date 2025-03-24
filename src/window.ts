@@ -22,9 +22,6 @@ let ao12_list:number[] = []
 function updateInfo():void {
     let current_session_data:sessionLog = stored_data.data.get(session_date)
 
-    console.log(session_date)
-    console.log(current_session_data)
-
     ao5_list.push(storage.Ao5(current_session_data))
     ao12_list.push(storage.Ao12(current_session_data))
 
@@ -34,7 +31,7 @@ function updateInfo():void {
     console.log(`session: ${chalk.bgBlueBright(session_date)}`)
 
     let info_table = current_session_data.entries.map((instance,index)=>{
-        const label:string = (instance.label ===  "DNF") ? chalk.red(instance.label) :chalk.yellow(instance.label)
+        const label = (instance.label ===  "DNF") ? chalk.red(instance.label) : instance.label
         const time:string|number = (instance.time === current_session_stats.fastest_solve) ? chalk.blue(instance.time) : instance.time
         return {
             n: index+1,

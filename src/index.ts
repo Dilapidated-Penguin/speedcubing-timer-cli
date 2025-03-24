@@ -216,21 +216,19 @@ function startSession(event: string,options:any):void{
     
     saved_data.data.set(session_date_ISO,storage.newSessionLog(session_date,event))
     saved_data.last_accessed_log = session_date_ISO
-    console.log(session_date)
-    console.log(saved_data.data)
+
     storage.saveData(saved_data)
     new_scramble = true
     listener.kill()
 
     if (options.window || options.w) {
         const scriptPath = path.join(__dirname, 'window.js');
-        
+
         const cmd = spawn('cmd.exe', ['/K', `start cmd /K node ${scriptPath} ${session_date.toISOString()}`], {
             detached: true,
             stdio: 'ignore',
             windowsHide: false
           });
-        
         cmd.unref(); // Allow the parent process to exit without waiting for this new process
         cmd.on('error', (err) => console.error(`Process error: ${err.message}`));
     }

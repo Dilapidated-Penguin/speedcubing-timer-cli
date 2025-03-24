@@ -50,8 +50,6 @@ let ao5_list = [];
 let ao12_list = [];
 function updateInfo() {
     let current_session_data = stored_data.data.get(session_date);
-    console.log(session_date);
-    console.log(current_session_data);
     ao5_list.push(storage.Ao5(current_session_data));
     ao12_list.push(storage.Ao12(current_session_data));
     let current_session_stats = global_stats.session_data.get(session_date);
@@ -60,7 +58,7 @@ function updateInfo() {
     console.log(`session: ${chalk_1.default.bgBlueBright(session_date)}`);
     let info_table = current_session_data.entries.map((instance, index) => {
         var _a, _b;
-        const label = (instance.label === "DNF") ? chalk_1.default.red(instance.label) : chalk_1.default.yellow(instance.label);
+        const label = (instance.label === "DNF") ? chalk_1.default.red(instance.label) : instance.label;
         const time = (instance.time === current_session_stats.fastest_solve) ? chalk_1.default.blue(instance.time) : instance.time;
         return {
             n: index + 1,

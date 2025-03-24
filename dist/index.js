@@ -62,6 +62,8 @@ let space_been_pressed = false;
 let new_scramble = false;
 let solve_labelled = false;
 const node_global_key_listener_1 = require("@futpib/node-global-key-listener");
+//information window---------------------------------
+let cmd = null;
 const listener = new node_global_key_listener_1.GlobalKeyboardListener();
 //*************************************************
 //const cli_title = cfonts.render('cli timer', {
@@ -229,7 +231,10 @@ function startSession(event, options) {
     listener.kill();
     if (options.window || options.w) {
         const scriptPath = path_1.default.join(__dirname, 'window.js');
-        const cmd = (0, child_process_1.spawn)('cmd.exe', ['/K', `start cmd /K node ${scriptPath} ${session_date.toISOString()}`], {
+        if (cmd !== null) {
+            cmd.kill();
+        }
+        cmd = (0, child_process_1.spawn)('cmd.exe', ['/K', `start cmd /K node ${scriptPath} ${session_date.toISOString()}`], {
             detached: true,
             stdio: 'ignore',
             windowsHide: false
