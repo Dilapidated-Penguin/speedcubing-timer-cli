@@ -32,7 +32,7 @@ function updateInfo():void {
 
     let info_table = current_session_data.entries.map((instance,index)=>{
         const label = (instance.label ===  "DNF") ? chalk.red(instance.label) : instance.label
-        const time:string|number = (instance.time === current_session_stats.fastest_solve) ? chalk.blue(instance.time) : instance.time
+        const time:string|number = (instance.time === current_session_stats.fastest_solve) ? chalk.blue(instance.time.toFixed(4)) : instance.time.toFixed(4)
         return {
             n: index+1,
             time: time,

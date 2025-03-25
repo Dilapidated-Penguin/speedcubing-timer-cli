@@ -62,8 +62,6 @@ let space_been_pressed = false;
 let new_scramble = false;
 let solve_labelled = false;
 const node_global_key_listener_1 = require("@futpib/node-global-key-listener");
-//information window---------------------------------
-let cmd = null;
 const listener = new node_global_key_listener_1.GlobalKeyboardListener();
 //*************************************************
 //const cli_title = cfonts.render('cli timer', {
@@ -224,17 +222,12 @@ function startSession(event, options) {
     const current_settings = settingsUtil.loadSettings();
     saved_data.data.set(session_date_ISO, storage.newSessionLog(session_date, event));
     saved_data.last_accessed_log = session_date_ISO;
-    console.log(session_date);
-    console.log(saved_data.data);
     storage.saveData(saved_data);
     new_scramble = true;
     listener.kill();
     if (options.window || options.w) {
         const scriptPath = path_1.default.join(__dirname, 'window.js');
-        if (cmd !== null) {
-            cmd.kill();
-        }
-        cmd = (0, child_process_1.spawn)('cmd.exe', ['/K', `start cmd /K node ${scriptPath} ${session_date.toISOString()}`], {
+        const cmd = (0, child_process_1.spawn)('cmd.exe', ['/K', `start cmd /K node ${scriptPath} ${session_date.toISOString()}`], {
             detached: true,
             stdio: 'ignore',
             windowsHide: false
@@ -258,6 +251,7 @@ function newSolve(current_settings, event, session_date, option) {
     process.stdout.write("\x1b[2K");
     console.log(stylizeScramble(scramble));
     listener.addListener(function (e, down) {
+        process.stdout.write('\x1b[2K\r');
         if ((0, get_windows_1.activeWindowSync)().id !== main_window_id) {
             return;
         }
@@ -342,8 +336,8 @@ function newSolve(current_settings, event, session_date, option) {
             }
             else {
                 if (e.state === "DOWN") {
-                    new_scramble = false;
                     const elapsedTime = stopTimer();
+                    new_scramble = false;
                     const current_session = saved_data.data.get(session_date_ISO);
                     current_session.entries.push({
                         scramble: scramble,
@@ -445,7 +439,6 @@ function newSolve(current_settings, event, session_date, option) {
             }
             return;
         }
-        process.stdout.write('\x1b[2K\r');
     });
 }
 function stopTimer() {

@@ -67,7 +67,7 @@ function normalizeArg(arg:string):string|null{
     return null
 }
 program
-    .version("1.0.9")
+    .version("1.0.12")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)")
 program
     .command('graph')
@@ -252,6 +252,8 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
     console.log(stylizeScramble(scramble))
 
     listener.addListener(function (e, down) {
+        process.stdout.write('\x1b[2K\r');
+        
         if(activeWindowSync().id !== main_window_id){
             return
         }
@@ -332,14 +334,15 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                         process.stdout.write('\x1b[2K');  // Clear the line
                         console.log(chalk.bgGreenBright('SOLVE') +
                         '\n \n');
+                        
                         startTimer()
                     }
                 }
             }else{
                 if(e.state === "DOWN"){
-                    new_scramble = false
-
                     const elapsedTime:number = stopTimer()
+                    new_scramble = false
+                    
                     const current_session:sessionLog = saved_data.data.get(session_date_ISO)
                     current_session.entries.push({
                         scramble: scramble,
@@ -450,7 +453,7 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
             }
             return
         } 
-        process.stdout.write('\x1b[2K\r');
+        
     });
 }
 function stopTimer():number{
