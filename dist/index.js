@@ -88,7 +88,7 @@ function normalizeArg(arg) {
     return null;
 }
 program
-    .version("1.0.9")
+    .version("1.0.12")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)");
 program
     .command('graph')
@@ -187,6 +187,41 @@ program
         else {
             console.log(chalk_1.default.red('Invalid argument:' + chalk_1.default.white('The argument is not a setting to change')));
         }
+    }
+});
+program
+    .command('list-session')
+    .action(() => {
+    const table_output = Array.from(storage.loadData().data.values())
+        .map((session) => {
+        return {
+            index: chalk_1.default.green(session.date),
+            date_formatted: session.date_formatted
+        };
+    }).filter((a, index) => index <= 9);
+    console.log(`Make use of the ${chalk_1.default.green(`index`)} to reference a specific solve using ${chalk_1.default.blueBright(`cubetimer show-session`)} ${chalk_1.default.green(`<index>`)}`);
+    console.log((0, nice_table_1.createTable)(table_output, ['index', 'date_formatted']));
+});
+program
+    .command('show-session')
+    .argument('<index>', 'the ISOstring version of the date used to reference a session')
+    .action((index) => {
+    const session_data = storage.loadData().data.get(index);
+    if (session_data !== undefined) {
+        console.log((0, nice_table_1.createTable)(Array.from(session_data.entries.values()).map((instance, index) => {
+            var _a;
+            return {
+                n: index,
+                time: instance.time.toFixed(3),
+                label: (_a = instance.label) !== null && _a !== void 0 ? _a : chalk_1.default.green(`OK`)
+            };
+        }), ['n', 'time', 'label']));
+        const session_stats = Object.keys(storage.loadStats().session_data)
+            .map((stat_name) => {
+            return `${stat_name}: ${chalk_1.default.bold(session_stats[stat_name].toFixed(3))}`;
+        })
+            .join(chalk_1.default.blue(` | `));
+        console.log(session_stats);
     }
 });
 program.parse(process.argv);

@@ -1,7 +1,7 @@
 #! /usr/bin/env node
 import chalk, { ChalkInstance } from "chalk";
 import { Command } from "commander";
-import fs from 'fs'
+import fs, { stat } from 'fs'
 import {event_choices,events_list} from './events.json'
 
 import {activeWindow,activeWindowSync} from 'get-windows';
@@ -11,7 +11,7 @@ import { select,number, input} from '@inquirer/prompts';
 import { plot, Plot } from 'nodeplotlib'
 import { spawn } from 'child_process';
 
-import {settings, sessionLog, file_data,global_statistics,event_types, session_statistics} from "./util/interfaces"
+import {settings, sessionLog, file_data,global_statistics,event_types, session_statistics, SolveInstance} from "./util/interfaces"
 import * as storage from "./util/storage"
 import  * as settingsUtil from "./util/settings"
 import path from 'path'
@@ -67,8 +67,9 @@ function normalizeArg(arg:string):string|null{
     return null
 }
 program
-    .version("1.0.12")
+    .version("1.0.13")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)")
+
 program
     .command('graph')
     .argument('<property>','desired statistic to graph')
@@ -175,7 +176,46 @@ program
         }
 
     })
+program
+    .command('list-session')
+    .action(()=>{
 
+        const table_output = Array.from(storage.loadData().data.values())
+            .map((session:sessionLog)=>{
+                return {
+                    index: chalk.green(session.date),
+                    date_formatted: session.date_formatted
+                }
+            }).filter((a,index)=>index<=9)
+
+        console.log(`Make use of the ${chalk.green(`index`)} to reference a specific solve using ${chalk.blueBright(`cubetimer show-session`)} ${chalk.green(`<index>`)}`)
+        console.log(createTable(table_output,['index','date_formatted']))
+
+    })
+
+program
+    .command('show-session')
+    .argument('<index>','the ISOstring version of the date used to reference a session')
+    .action((index:string)=>{
+        const session_data:sessionLog = storage.loadData().data.get(index)
+        if(session_data !== undefined){
+            console.log(createTable(Array.from(session_data.entries.values()).map((instance:SolveInstance,index:number)=>{
+                return {
+                    n:index,
+                    time:instance.time.toFixed(3),
+                    label:instance.label ?? chalk.green(`OK`)
+                }
+            }),['n','time','label']))
+            
+
+            const session_stats:string = Array.from(storage.loadStats().session_data.keys())
+            .map((stat_name:string)=>{
+                return `${stat_name}: ${chalk.bold(session_stats[stat_name].toFixed(3))}`
+            })
+            .join(chalk.blue(` | `))
+            console.log(session_stats)
+        }
+    })
 
 program.parse(process.argv)
 //const options = program.opts();
