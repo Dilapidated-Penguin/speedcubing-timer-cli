@@ -41,15 +41,6 @@ import {GlobalKeyboardListener} from "@futpib/node-global-key-listener";
 const listener = new GlobalKeyboardListener();
 //*************************************************
 
-
-//const cli_title = cfonts.render('cli timer', {
-//	font: 'block',              // define the font face
-//	align: 'center',              // define text alignment
-//	background: 'transparent',  // define the background color, you can also use `backgroundColor` here as key
-//	letterSpacing: 1,           // define letter spacing
-//	gradient: ['red','green'],            // define your two gradient colors
-//});
-
 console.log(cli_title_string)
 function normalizeArg(arg:string):string|null{
     const aliases = {
@@ -67,7 +58,7 @@ function normalizeArg(arg:string):string|null{
     return null
 }
 program
-    .version("1.0.13")
+    .version("1.0.14")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)")
 
 program
@@ -121,7 +112,7 @@ program
     .command('start')
     .argument('[event]', 'the event you wish to practice','333')
     .option('-f, --focusMode','Displays only the most important stats')
-    .option('-w','--window','Opens a second command prompt window to display the informationa and stats related to the solve')
+    .option('-w --window','Opens a second command prompt window to display the informationa and stats related to the solve')
     .description('Begin a session of practicing a certain event')
     .action((event:string,options:any)=>{
         console.log(event)
@@ -454,9 +445,8 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                     console.log(chalk.bold(`Ao5: `)+ chalk.magenta(current_Ao5 ?? "--") + chalk.green(`s`))
                     console.log(chalk.bold(`Ao12: `)+ chalk.magenta(current_Ao12 ?? "--") + chalk.green(`s`) +
                     `\n \n`)
-                    //check if Ao5/12 are the best 
 
-                    if((!option.focusMode || option.f) && !(option.w || option.window)){
+                    if(!(option.focusMode || option.f) && !(option.w || option.window)){
                         //solves
                         console.table(createTable(current_session.entries.map((instance)=>{
                             return {
@@ -507,28 +497,23 @@ function startTimer():void{
     startTime = process.hrtime()
     timer_running = true
 }
-function stylizeScramble(scramble:string):string{
+function stylizeScramble(scramble: string): string {
+    const colorMap: Record<string, (s: string) => string> = {
+        'r': chalk.redBright,
+        'l': chalk.blueBright,
+        'u': chalk.cyanBright,
+        'd': chalk.greenBright,
+        "'": chalk.whiteBright,
+        '2': chalk.cyan,
+        'F': chalk.magenta.underline,
+    };
+
     return scramble
-    .trim()
-    .split('')
-    .reduce((acc,curr)=>{
-        switch(curr){
-            case 'r':
-                return acc += chalk.redBright(curr)
-            case 'l':
-                return acc += chalk.blueBright(curr)
-            case 'u':
-                return acc += chalk.cyanBright(curr)
-            case 'd':
-                return acc += chalk.greenBright(curr)
-            case `'`:
-                return acc += chalk.whiteBright(curr)
-            case '2':
-                return acc += chalk.cyan(curr)
-            case 'F':
-                return acc += chalk.magenta.underline(curr)
-            default:
-                return acc += chalk.magenta(curr)
-        }  
-    },'')
+        .trim()
+        .split('')
+        .map(char => {
+            const stylize = colorMap[char] || chalk.magenta;
+            return stylize(char);
+        })
+        .join('');
 }

@@ -88,7 +88,7 @@ function normalizeArg(arg) {
     return null;
 }
 program
-    .version("1.0.12")
+    .version("1.0.13")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)");
 program
     .command('graph')
@@ -137,7 +137,7 @@ program
     .command('start')
     .argument('[event]', 'the event you wish to practice', '333')
     .option('-f, --focusMode', 'Displays only the most important stats')
-    .option('-w', '--window', 'Opens a second command prompt window to display the informationa and stats related to the solve')
+    .option('-w --window', 'Opens a second command prompt window to display the informationa and stats related to the solve')
     .description('Begin a session of practicing a certain event')
     .action((event, options) => {
     console.log(event);
@@ -216,7 +216,7 @@ program
                 label: (_a = instance.label) !== null && _a !== void 0 ? _a : chalk_1.default.green(`OK`)
             };
         }), ['n', 'time', 'label']));
-        const session_stats = Object.keys(storage.loadStats().session_data)
+        const session_stats = Array.from(storage.loadStats().session_data.keys())
             .map((stat_name) => {
             return `${stat_name}: ${chalk_1.default.bold(session_stats[stat_name].toFixed(3))}`;
         })
@@ -260,6 +260,7 @@ function startSession(event, options) {
     storage.saveData(saved_data);
     new_scramble = true;
     listener.kill();
+    console.log(options);
     if (options.window || options.w) {
         const scriptPath = path_1.default.join(__dirname, 'window.js');
         const cmd = (0, child_process_1.spawn)('cmd.exe', ['/K', `start cmd /K node ${scriptPath} ${session_date.toISOString()}`], {
@@ -439,8 +440,7 @@ function newSolve(current_settings, event, session_date, option) {
                     console.log(chalk_1.default.bold(`Ao5: `) + chalk_1.default.magenta(current_Ao5 !== null && current_Ao5 !== void 0 ? current_Ao5 : "--") + chalk_1.default.green(`s`));
                     console.log(chalk_1.default.bold(`Ao12: `) + chalk_1.default.magenta(current_Ao12 !== null && current_Ao12 !== void 0 ? current_Ao12 : "--") + chalk_1.default.green(`s`) +
                         `\n \n`);
-                    //check if Ao5/12 are the best 
-                    if ((!option.focusMode || option.f) && !(option.w || option.window)) {
+                    if (!(option.focusMode || option.f) && !(option.w || option.window)) {
                         //solves
                         console.table((0, nice_table_1.createTable)(current_session.entries.map((instance) => {
                             var _a;
@@ -488,28 +488,22 @@ function startTimer() {
     timer_running = true;
 }
 function stylizeScramble(scramble) {
+    const colorMap = {
+        'r': chalk_1.default.redBright,
+        'l': chalk_1.default.blueBright,
+        'u': chalk_1.default.cyanBright,
+        'd': chalk_1.default.greenBright,
+        "'": chalk_1.default.whiteBright,
+        '2': chalk_1.default.cyan,
+        'F': chalk_1.default.magenta.underline,
+    };
     return scramble
         .trim()
         .split('')
-        .reduce((acc, curr) => {
-        switch (curr) {
-            case 'r':
-                return acc += chalk_1.default.redBright(curr);
-            case 'l':
-                return acc += chalk_1.default.blueBright(curr);
-            case 'u':
-                return acc += chalk_1.default.cyanBright(curr);
-            case 'd':
-                return acc += chalk_1.default.greenBright(curr);
-            case `'`:
-                return acc += chalk_1.default.whiteBright(curr);
-            case '2':
-                return acc += chalk_1.default.cyan(curr);
-            case 'F':
-                return acc += chalk_1.default.magenta.underline(curr);
-            default:
-                return acc += chalk_1.default.magenta(curr);
-        }
-    }, '');
+        .map(char => {
+        const stylize = colorMap[char] || chalk_1.default.magenta;
+        return stylize(char);
+    })
+        .join('');
 }
 //# sourceMappingURL=index.js.map
