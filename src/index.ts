@@ -1,17 +1,17 @@
 #! /usr/bin/env node
-import chalk, { ChalkInstance } from "chalk";
+import chalk from "chalk";
 import { Command } from "commander";
-import fs, { stat } from 'fs'
+
 import {event_choices,events_list} from './events.json'
 
-import {activeWindow,activeWindowSync} from 'get-windows';
+import {activeWindowSync} from 'get-windows';
 import { createTable } from 'nice-table';
 
-import { select,number, input} from '@inquirer/prompts';
+import { select,number, input,Separator} from '@inquirer/prompts';
 import { plot, Plot } from 'nodeplotlib'
 import { spawn } from 'child_process';
 
-import {settings, sessionLog, file_data,global_statistics,event_types, session_statistics, SolveInstance} from "./util/interfaces"
+import {settings, sessionLog, session_statistics, SolveInstance} from "./util/interfaces"
 import * as storage from "./util/storage"
 import  * as settingsUtil from "./util/settings"
 import path from 'path'
@@ -58,7 +58,7 @@ function normalizeArg(arg:string):string|null{
     return null
 }
 program
-    .version("1.0.14")
+    .version("1.0.15")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)")
 
 program
@@ -167,45 +167,77 @@ program
         }
 
     })
-program
-    .command('list-session')
-    .action(()=>{
 
-        const table_output = Array.from(storage.loadData().data.values())
-            .map((session:sessionLog)=>{
-                return {
-                    index: chalk.green(session.date),
-                    date_formatted: session.date_formatted
-                }
-            }).filter((a,index)=>index<=9)
-
-        console.log(`Make use of the ${chalk.green(`index`)} to reference a specific solve using ${chalk.blueBright(`cubetimer show-session`)} ${chalk.green(`<index>`)}`)
-        console.log(createTable(table_output,['index','date_formatted']))
-
-    })
 
 program
     .command('show-session')
-    .argument('<index>','the ISOstring version of the date used to reference a session')
-    .action((index:string)=>{
-        const session_data:sessionLog = storage.loadData().data.get(index)
-        if(session_data !== undefined){
-            console.log(createTable(Array.from(session_data.entries.values()).map((instance:SolveInstance,index:number)=>{
-                return {
-                    n:index,
-                    time:instance.time.toFixed(3),
-                    label:instance.label ?? chalk.green(`OK`)
-                }
-            }),['n','time','label']))
-            
+    .action(()=>{
+        const menu_length:number = 5
+        function newChoices(menu_page:number){
+            const session_array:sessionLog[] = Array.from(storage.loadData().data.values())
 
-            const session_stats:string = Array.from(storage.loadStats().session_data.keys())
-            .map((stat_name:string)=>{
-                return `${stat_name}: ${chalk.bold(session_stats[stat_name].toFixed(3))}`
+            let menu_choices:any = session_array
+            .map((session:sessionLog)=>{
+                return {
+                    name: session.date_formatted,
+                    value: session.date
+                }
+            }).filter((v,index)=>{
+                return (index>=menu_page*(menu_length)) && (index<((menu_page+1)*menu_length))
             })
-            .join(chalk.blue(` | `))
-            console.log(session_stats)
+            
+            if(menu_page !== 0){
+                menu_choices.unshift({
+                    name:chalk.blue(`Back`),
+                    value: 'back'
+                })
+            }
+            
+            if(session_array[(menu_page+1)*menu_length] !== undefined){
+                menu_choices.push({
+                    name:chalk.blue(`next`),
+                    value: 'next'
+                })
+            }
+            
+            select({
+                message:`Select the session you'd like to observe`,
+                choices:menu_choices
+            }).then((value:string)=>{
+                switch(value){
+                    case 'back':
+                        newChoices(menu_page-1)
+                        break;
+                    case 'next':
+                        newChoices(menu_page+1)
+                        break;
+                    default:
+                        const current_session_data:sessionLog = storage.loadData().data.get(value)
+                        const current_session_stats:session_statistics = storage.loadStats().session_data.get(value)
+
+                        let info_table = current_session_data.entries.map((instance,index)=>{
+                            const label = (instance.label ===  "DNF") ? chalk.red(instance.label) : instance.label
+                            return {
+                                n: index+1,
+                                time: instance.time,
+                                label: label ?? chalk.green('OK'),
+                            }
+                        })
+                        console.log(`\n`)
+                        console.log(createTable(info_table,['n','time','label']))
+
+                        console.log(Object.keys(current_session_stats).map((key_name:string)=>{
+                            return `${key_name}: ${current_session_stats[key_name].toFixed(3)} ${chalk.green('s')}`
+                        })
+                        .join(chalk.blue('\n')))
+                    break;
+                }
+            }).catch((err)=>{
+                console.log(chalk.red(`An error has occurred:${err}`))
+            })
         }
+
+        newChoices(0)
     })
 
 program.parse(process.argv)
@@ -336,7 +368,7 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                         console.log(chalk.bold.magentaBright(`Whenever ready use the spacebar to start a new solve`))
 
                     }).catch((err)=>{
-                        console.log(chalk.red(`An error has occurred`))
+                        console.log(chalk.red(`An error has occurred:${err}`))
                     })
                 }else{
                     console.log(chalk.redBright(`There exist no entries in the current session to label`))

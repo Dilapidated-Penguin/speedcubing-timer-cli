@@ -64,13 +64,6 @@ let solve_labelled = false;
 const node_global_key_listener_1 = require("@futpib/node-global-key-listener");
 const listener = new node_global_key_listener_1.GlobalKeyboardListener();
 //*************************************************
-//const cli_title = cfonts.render('cli timer', {
-//	font: 'block',              // define the font face
-//	align: 'center',              // define text alignment
-//	background: 'transparent',  // define the background color, you can also use `backgroundColor` here as key
-//	letterSpacing: 1,           // define letter spacing
-//	gradient: ['red','green'],            // define your two gradient colors
-//});
 console.log(cli_title_json_1.string);
 function normalizeArg(arg) {
     const aliases = {
@@ -88,7 +81,7 @@ function normalizeArg(arg) {
     return null;
 }
 program
-    .version("1.0.13")
+    .version("1.0.15")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)");
 program
     .command('graph')
@@ -190,39 +183,67 @@ program
     }
 });
 program
-    .command('list-session')
-    .action(() => {
-    const table_output = Array.from(storage.loadData().data.values())
-        .map((session) => {
-        return {
-            index: chalk_1.default.green(session.date),
-            date_formatted: session.date_formatted
-        };
-    }).filter((a, index) => index <= 9);
-    console.log(`Make use of the ${chalk_1.default.green(`index`)} to reference a specific solve using ${chalk_1.default.blueBright(`cubetimer show-session`)} ${chalk_1.default.green(`<index>`)}`);
-    console.log((0, nice_table_1.createTable)(table_output, ['index', 'date_formatted']));
-});
-program
     .command('show-session')
-    .argument('<index>', 'the ISOstring version of the date used to reference a session')
-    .action((index) => {
-    const session_data = storage.loadData().data.get(index);
-    if (session_data !== undefined) {
-        console.log((0, nice_table_1.createTable)(Array.from(session_data.entries.values()).map((instance, index) => {
-            var _a;
+    .action(() => {
+    const menu_length = 5;
+    function newChoices(menu_page) {
+        const session_array = Array.from(storage.loadData().data.values());
+        let menu_choices = session_array
+            .map((session) => {
             return {
-                n: index,
-                time: instance.time.toFixed(3),
-                label: (_a = instance.label) !== null && _a !== void 0 ? _a : chalk_1.default.green(`OK`)
+                name: session.date_formatted,
+                value: session.date
             };
-        }), ['n', 'time', 'label']));
-        const session_stats = Array.from(storage.loadStats().session_data.keys())
-            .map((stat_name) => {
-            return `${stat_name}: ${chalk_1.default.bold(session_stats[stat_name].toFixed(3))}`;
-        })
-            .join(chalk_1.default.blue(` | `));
-        console.log(session_stats);
+        }).filter((v, index) => {
+            return (index >= menu_page * (menu_length)) && (index < ((menu_page + 1) * menu_length));
+        });
+        if (menu_page !== 0) {
+            menu_choices.unshift({
+                name: chalk_1.default.blue(`Back`),
+                value: 'back'
+            });
+        }
+        if (session_array[(menu_page + 1) * menu_length] !== undefined) {
+            menu_choices.push({
+                name: chalk_1.default.blue(`next`),
+                value: 'next'
+            });
+        }
+        (0, prompts_1.select)({
+            message: `Select the session you'd like to observe`,
+            choices: menu_choices
+        }).then((value) => {
+            switch (value) {
+                case 'back':
+                    newChoices(menu_page - 1);
+                    break;
+                case 'next':
+                    newChoices(menu_page + 1);
+                    break;
+                default:
+                    const current_session_data = storage.loadData().data.get(value);
+                    const current_session_stats = storage.loadStats().session_data.get(value);
+                    let info_table = current_session_data.entries.map((instance, index) => {
+                        const label = (instance.label === "DNF") ? chalk_1.default.red(instance.label) : instance.label;
+                        return {
+                            n: index + 1,
+                            time: instance.time,
+                            label: label !== null && label !== void 0 ? label : chalk_1.default.green('OK'),
+                        };
+                    });
+                    console.log(`\n`);
+                    console.log((0, nice_table_1.createTable)(info_table, ['n', 'time', 'label']));
+                    console.log(Object.keys(current_session_stats).map((key_name) => {
+                        return `${key_name}: ${current_session_stats[key_name].toFixed(3)} ${chalk_1.default.green('s')}`;
+                    })
+                        .join(chalk_1.default.blue('\n')));
+                    break;
+            }
+        }).catch((err) => {
+            console.log(chalk_1.default.red(`An error has occurred:${err}`));
+        });
     }
+    newChoices(0);
 });
 program.parse(process.argv);
 //const options = program.opts();
@@ -260,7 +281,6 @@ function startSession(event, options) {
     storage.saveData(saved_data);
     new_scramble = true;
     listener.kill();
-    console.log(options);
     if (options.window || options.w) {
         const scriptPath = path_1.default.join(__dirname, 'window.js');
         const cmd = (0, child_process_1.spawn)('cmd.exe', ['/K', `start cmd /K node ${scriptPath} ${session_date.toISOString()}`], {
@@ -334,7 +354,7 @@ function newSolve(current_settings, event, session_date, option) {
                         console.log(chalk_1.default.green(`Last solve labelled ${answer}`));
                         console.log(chalk_1.default.bold.magentaBright(`Whenever ready use the spacebar to start a new solve`));
                     }).catch((err) => {
-                        console.log(chalk_1.default.red(`An error has occurred`));
+                        console.log(chalk_1.default.red(`An error has occurred:${err}`));
                     });
                 }
                 else {
