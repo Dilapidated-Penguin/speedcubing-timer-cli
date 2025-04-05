@@ -185,7 +185,7 @@ program
 program
     .command('show-session')
     .action(() => {
-    const menu_length = 5;
+    const menu_length = settingsUtil.loadSettings().show_session_menu_length;
     function newChoices(menu_page) {
         const session_array = Array.from(storage.loadData().data.values());
         let menu_choices = session_array
@@ -227,16 +227,21 @@ program
                         const label = (instance.label === "DNF") ? chalk_1.default.red(instance.label) : instance.label;
                         return {
                             n: index + 1,
-                            time: instance.time,
+                            time: instance.time.toFixed(3),
                             label: label !== null && label !== void 0 ? label : chalk_1.default.green('OK'),
                         };
                     });
                     console.log(`\n`);
                     console.log((0, nice_table_1.createTable)(info_table, ['n', 'time', 'label']));
-                    console.log(Object.keys(current_session_stats).map((key_name) => {
-                        return `${key_name}: ${current_session_stats[key_name].toFixed(3)} ${chalk_1.default.green('s')}`;
-                    })
-                        .join(chalk_1.default.blue('\n')));
+                    if (current_session_stats !== undefined) {
+                        console.log(Object.keys(current_session_stats).map((key_name) => {
+                            return `${key_name}: ${current_session_stats[key_name].toFixed(3)} ${chalk_1.default.green('s')}`;
+                        })
+                            .join(chalk_1.default.blue('\n')));
+                    }
+                    else {
+                        console.log(current_session_stats);
+                    }
                     break;
             }
         }).catch((err) => {
@@ -246,7 +251,6 @@ program
     newChoices(0);
 });
 program.parse(process.argv);
-//const options = program.opts();
 function updateSetting(current_settings, property) {
     const prompt = (typeof current_settings[property] === 'number') ? prompts_1.number : prompts_1.input;
     prompt({

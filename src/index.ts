@@ -58,7 +58,7 @@ function normalizeArg(arg:string):string|null{
     return null
 }
 program
-    .version("1.0.15")
+    .version("1.0.16")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)")
 
 program
@@ -115,7 +115,6 @@ program
     .option('-w --window','Opens a second command prompt window to display the informationa and stats related to the solve')
     .description('Begin a session of practicing a certain event')
     .action((event:string,options:any)=>{
-        console.log(event)
         if(event !== undefined){
             const normalized_event = event
                 .toLowerCase()
@@ -172,7 +171,9 @@ program
 program
     .command('show-session')
     .action(()=>{
-        const menu_length:number = 5
+        const menu_length:number = settingsUtil.loadSettings().show_session_menu_length
+        
+
         function newChoices(menu_page:number){
             const session_array:sessionLog[] = Array.from(storage.loadData().data.values())
 
@@ -213,23 +214,29 @@ program
                         break;
                     default:
                         const current_session_data:sessionLog = storage.loadData().data.get(value)
-                        const current_session_stats:session_statistics = storage.loadStats().session_data.get(value)
 
                         let info_table = current_session_data.entries.map((instance,index)=>{
                             const label = (instance.label ===  "DNF") ? chalk.red(instance.label) : instance.label
                             return {
                                 n: index+1,
-                                time: instance.time,
+                                time: instance.time.toFixed(3),
                                 label: label ?? chalk.green('OK'),
                             }
                         })
                         console.log(`\n`)
                         console.log(createTable(info_table,['n','time','label']))
 
-                        console.log(Object.keys(current_session_stats).map((key_name:string)=>{
-                            return `${key_name}: ${current_session_stats[key_name].toFixed(3)} ${chalk.green('s')}`
-                        })
-                        .join(chalk.blue('\n')))
+                        const current_session_stats:session_statistics = storage.loadStats().session_data.get(value)
+
+                        if(current_session_stats !== undefined){
+                            console.log(Object.keys(current_session_stats).map((key_name:string)=>{
+                                return `${key_name}: ${current_session_stats[key_name].toFixed(3)} ${chalk.green('s')}`
+                            })
+                            .join(chalk.blue('\n')))
+                        }else{
+                            console.log(`Statistics unavailable`)
+                        }
+
                     break;
                 }
             }).catch((err)=>{
@@ -241,7 +248,6 @@ program
     })
 
 program.parse(process.argv)
-//const options = program.opts();
 
 function updateSetting(current_settings:settings,property:string):void{
     const prompt = (typeof current_settings[property] === 'number') ? number : input

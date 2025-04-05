@@ -10,7 +10,8 @@ export function saveSettings(data:settings):void {
 export function loadSettings():settings {
     if(!fs.existsSync(SETTINGS_FILE)){
         return {
-            scramble_length: 12
+            scramble_length: 12,
+            show_session_menu_length: 5
         }
     }else{
         return JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf-8'));

@@ -32,6 +32,7 @@ export interface global_statistics {
 }
 export interface settings {
     scramble_length: number
+    show_session_menu_length:number
 }
 
 export type event_types = 'pyraminx' | 'square1'|'megaminx' |'skewb'| number
