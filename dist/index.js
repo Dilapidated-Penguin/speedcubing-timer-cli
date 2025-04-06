@@ -81,7 +81,7 @@ function normalizeArg(arg) {
     return null;
 }
 program
-    .version("1.0.15")
+    .version("1.0.17")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)");
 program
     .command('graph')
@@ -127,13 +127,42 @@ program
     }
 });
 program
+    .command('scramble')
+    .argument('<format>', `Format of the scramble(s) you'd like to generate`)
+    .argument('[number]', 'number of scrambles to generate', '1')
+    .argument('[length]', `Length of the scramble`)
+    .description('Generate a scramble')
+    .action((event, number, length) => {
+    var _a;
+    const normalized_event = event
+        .toLowerCase()
+        .trim();
+    if (!validEvent(normalized_event)) {
+        return;
+    }
+    number = number
+        .toLowerCase()
+        .trim();
+    const current_settings = settingsUtil.loadSettings();
+    const scramble_length = (_a = Number(length)) !== null && _a !== void 0 ? _a : current_settings.scramble_length;
+    var scramble_generator = new Scrambow();
+    let scramble = scramble_generator
+        .setType(event)
+        .setLength(scramble_length)
+        .get(Number(number))
+        .map((scramble_object, index) => {
+        return `${index + 1}) ${stylizeScramble(scramble_object.scramble_string)}`;
+    })
+        .join(`\n`);
+    console.log(scramble);
+});
+program
     .command('start')
     .argument('[event]', 'the event you wish to practice', '333')
     .option('-f, --focusMode', 'Displays only the most important stats')
     .option('-w --window', 'Opens a second command prompt window to display the informationa and stats related to the solve')
     .description('Begin a session of practicing a certain event')
     .action((event, options) => {
-    console.log(event);
     if (event !== undefined) {
         const normalized_event = event
             .toLowerCase()
@@ -222,7 +251,6 @@ program
                     break;
                 default:
                     const current_session_data = storage.loadData().data.get(value);
-                    const current_session_stats = storage.loadStats().session_data.get(value);
                     let info_table = current_session_data.entries.map((instance, index) => {
                         const label = (instance.label === "DNF") ? chalk_1.default.red(instance.label) : instance.label;
                         return {
@@ -233,6 +261,7 @@ program
                     });
                     console.log(`\n`);
                     console.log((0, nice_table_1.createTable)(info_table, ['n', 'time', 'label']));
+                    const current_session_stats = storage.loadStats().session_data.get(value);
                     if (current_session_stats !== undefined) {
                         console.log(Object.keys(current_session_stats).map((key_name) => {
                             return `${key_name}: ${current_session_stats[key_name].toFixed(3)} ${chalk_1.default.green('s')}`;
@@ -240,7 +269,7 @@ program
                             .join(chalk_1.default.blue('\n')));
                     }
                     else {
-                        console.log(current_session_stats);
+                        console.log(`Statistics unavailable`);
                     }
                     break;
             }
@@ -252,7 +281,11 @@ program
 });
 program.parse(process.argv);
 function updateSetting(current_settings, property) {
-    const prompt = (typeof current_settings[property] === 'number') ? prompts_1.number : prompts_1.input;
+    let prompt;
+    switch (typeof current_settings[property]) {
+        case 'number': prompt = prompts_1.number;
+        case 'string': prompt = prompts_1.input;
+    }
     prompt({
         message: `Enter new value for ${property}`,
         default: `${current_settings[property]}`

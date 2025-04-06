@@ -15,6 +15,7 @@ import {settings, sessionLog, session_statistics, SolveInstance} from "./util/in
 import * as storage from "./util/storage"
 import  * as settingsUtil from "./util/settings"
 import path from 'path'
+
 var Scrambow = require('scrambow').Scrambow;
 const cfonts = require('cfonts');
 
@@ -58,7 +59,7 @@ function normalizeArg(arg:string):string|null{
     return null
 }
 program
-    .version("1.0.16")
+    .version("1.0.17")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)")
 
 program
@@ -107,7 +108,41 @@ program
             "slowest_solve")
         }
     })
+program
+    .command('scramble')
+    .argument('<format>',`Format of the scramble(s) you'd like to generate`)
+    .argument('[number]','number of scrambles to generate','1')
+    .argument('[length]',`Length of the scramble`)
+    .description('Generate a scramble')
+    .action((event:string,number:string,length:string)=>{
+        const normalized_event:string = event
+            .toLowerCase()
+            .trim()
 
+        if(!validEvent(normalized_event)){
+            return
+        }
+        number = number
+            .toLowerCase()
+            .trim()
+
+        const current_settings:settings = settingsUtil.loadSettings()
+        const scramble_length:number = Number(length) ?? current_settings.scramble_length
+
+        var scramble_generator = new Scrambow()
+        
+        let scramble: string = scramble_generator
+        .setType(event)
+        .setLength(scramble_length)
+        .get(Number(number))
+        .map((scramble_object,index)=>{
+            return `${index+1}) ${stylizeScramble(scramble_object.scramble_string)}`
+        })
+        .join(`\n`)
+    
+        console.log(scramble)
+        
+    })
 program
     .command('start')
     .argument('[event]', 'the event you wish to practice','333')
@@ -250,7 +285,12 @@ program
 program.parse(process.argv)
 
 function updateSetting(current_settings:settings,property:string):void{
-    const prompt = (typeof current_settings[property] === 'number') ? number : input
+    let prompt
+    switch(typeof current_settings[property]){
+        case 'number': prompt = number
+        case 'string': prompt = input
+    }
+
     prompt({
         message: `Enter new value for ${property}`,
         default: `${current_settings[property]}` as never
