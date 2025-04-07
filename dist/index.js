@@ -71,7 +71,8 @@ function normalizeArg(arg) {
         slowest_solve: ['w', 's', 'worst', 'slow', 'slowest', 'slowest_timer'],
         session_mean: ['m', 'mean', 'avg', 'average', 'session_mean'],
         standard_deviation: ['dev', 'standard_deviation', 'std.dev', 'deviation', 'd'],
-        variance: ['var', 'v', 'variance', 'var.']
+        variance: ['var', 'v', 'variance', 'var.'],
+        all: ['*']
     };
     for (const [key, val] of Object.entries(aliases)) {
         if ((key === arg) || (val.includes(arg))) {
@@ -81,7 +82,7 @@ function normalizeArg(arg) {
     return null;
 }
 program
-    .version("1.0.17")
+    .version("1.0.18")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)");
 program
     .command('graph')
@@ -101,17 +102,27 @@ program
                 .map((ISO_date) => {
                 return new Date(ISO_date);
             });
-            const y_data = x_dates.map((date) => {
-                return session_data.get(date.toISOString())[normalized_property];
-            });
-            const data = [
-                {
+            const retrieve_data = (property) => {
+                const y_data = x_dates.map((date) => {
+                    return session_data.get(date.toISOString())[property];
+                });
+                return {
                     x: x_dates,
                     y: y_data,
                     type: 'scatter'
-                }
-            ];
-            (0, nodeplotlib_1.plot)(data);
+                };
+            };
+            switch (normalized_property) {
+                case 'all':
+                    const data = ['fastest_solve', 'session_mean', 'standard_deviation', 'variance', 'slowest_solve'].map((property) => {
+                        return retrieve_data(property);
+                    });
+                    (0, nodeplotlib_1.plot)(data);
+                    break;
+                default:
+                    (0, nodeplotlib_1.plot)([retrieve_data(normalized_property)]);
+                    break;
+            }
         }
         else {
             console.log(`error: ` + chalk_1.default.red(`Session data.size === 0`));
@@ -132,24 +143,29 @@ program
     .argument('[number]', 'number of scrambles to generate', '1')
     .argument('[length]', `Length of the scramble`)
     .description('Generate a scramble')
-    .action((event, number, length) => {
+    .action((event, count, length) => {
     var _a;
     const normalized_event = event
         .toLowerCase()
         .trim();
     if (!validEvent(normalized_event)) {
+        console.log(chalk_1.default.redBright(`invalid event`));
         return;
     }
-    number = number
+    count = count
         .toLowerCase()
         .trim();
     const current_settings = settingsUtil.loadSettings();
     const scramble_length = (_a = Number(length)) !== null && _a !== void 0 ? _a : current_settings.scramble_length;
+    if ((scramble_length <= 0) || (scramble_length > 40)) {
+        console.log(chalk_1.default.red(`invalid length`));
+        return;
+    }
     var scramble_generator = new Scrambow();
     let scramble = scramble_generator
-        .setType(event)
+        .setType(normalized_event)
         .setLength(scramble_length)
-        .get(Number(number))
+        .get(Number(count))
         .map((scramble_object, index) => {
         return `${index + 1}) ${stylizeScramble(scramble_object.scramble_string)}`;
     })
@@ -548,17 +564,17 @@ function stylizeScramble(scramble) {
     const colorMap = {
         'r': chalk_1.default.redBright,
         'l': chalk_1.default.blueBright,
-        'u': chalk_1.default.cyanBright,
+        'u': chalk_1.default.blueBright,
         'd': chalk_1.default.greenBright,
         "'": chalk_1.default.whiteBright,
-        '2': chalk_1.default.cyan,
-        'F': chalk_1.default.magenta.underline,
+        '2': chalk_1.default.blue,
+        'F': chalk_1.default.cyan.underline,
     };
     return scramble
         .trim()
         .split('')
         .map(char => {
-        const stylize = colorMap[char] || chalk_1.default.magenta;
+        const stylize = colorMap[char] || chalk_1.default.cyan;
         return stylize(char);
     })
         .join('');

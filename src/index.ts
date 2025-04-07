@@ -49,7 +49,8 @@ function normalizeArg(arg:string):string|null{
         slowest_solve: ['w','s','worst','slow','slowest','slowest_timer'],
         session_mean: ['m','mean','avg','average','session_mean'],
         standard_deviation:['dev','standard_deviation','std.dev','deviation','d'],
-        variance:['var','v','variance','var.']
+        variance:['var','v','variance','var.'],
+        all:['*']
     }
     for(const [key,val] of Object.entries(aliases)){
         if((key === arg) || (val.includes(arg))){
@@ -59,7 +60,7 @@ function normalizeArg(arg:string):string|null{
     return null
 }
 program
-    .version("1.0.17")
+    .version("1.0.18")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)")
 
 program
@@ -73,28 +74,40 @@ program
     slowest_solve`)
     .action((property:string)=>{
         const normalized_property:string = normalizeArg(property)
-
+        
         if(normalized_property !== null){
-            const session_data:Map<string,session_statistics> = storage.loadStats().session_data
+            const session_data:Map<string,session_statistics> =storage.loadStats().session_data
 
             if(session_data.size >=0){
+
+
                 const x_dates:Date[] = Array.from(session_data.keys())
                     .map((ISO_date)=>{
                         return new Date(ISO_date)
                     })
-
-                const y_data:number[] = x_dates.map((date:Date)=>{
-                    return session_data.get(date.toISOString())[normalized_property]
-                })
-                const data: Plot[] = [
-                    {
+                const retrieve_data = (property:string):Plot=>{
+                    const y_data:number[] = x_dates.map((date:Date)=>{
+                        return session_data.get(date.toISOString())[property]
+                    })
+                    
+                    return {
                         x:x_dates,
                         y:y_data,
                         type: 'scatter'
                     }
-                ]
+                }
+                switch(normalized_property){
+                    case 'all':
+                        const data:Plot[] = ['fastest_solve','session_mean','standard_deviation','variance','slowest_solve'].map((property:string)=>{
+                            return retrieve_data(property)
+                        })
+                        plot(data)
+                    break;
+                    default:
+                        plot([retrieve_data(normalized_property)])
+                    break;
+                }
 
-                plot(data)
             }else{
                 console.log(`error: ` +chalk.red(`Session data.size === 0`))
             }
@@ -114,27 +127,34 @@ program
     .argument('[number]','number of scrambles to generate','1')
     .argument('[length]',`Length of the scramble`)
     .description('Generate a scramble')
-    .action((event:string,number:string,length:string)=>{
+    .action((event:string,count:string,length:string)=>{
         const normalized_event:string = event
             .toLowerCase()
             .trim()
 
         if(!validEvent(normalized_event)){
+            console.log(chalk.redBright(`invalid event`))
             return
         }
-        number = number
+
+        count = count
             .toLowerCase()
             .trim()
 
         const current_settings:settings = settingsUtil.loadSettings()
         const scramble_length:number = Number(length) ?? current_settings.scramble_length
 
+        if((scramble_length<=0) || (scramble_length>40)){
+            console.log(chalk.red(`invalid length`))
+            return
+        }
+
         var scramble_generator = new Scrambow()
         
         let scramble: string = scramble_generator
-        .setType(event)
+        .setType(normalized_event)
         .setLength(scramble_length)
-        .get(Number(number))
+        .get(Number(count))
         .map((scramble_object,index)=>{
             return `${index+1}) ${stylizeScramble(scramble_object.scramble_string)}`
         })
@@ -579,18 +599,18 @@ function stylizeScramble(scramble: string): string {
     const colorMap: Record<string, (s: string) => string> = {
         'r': chalk.redBright,
         'l': chalk.blueBright,
-        'u': chalk.cyanBright,
+        'u': chalk.blueBright,
         'd': chalk.greenBright,
         "'": chalk.whiteBright,
-        '2': chalk.cyan,
-        'F': chalk.magenta.underline,
+        '2': chalk.blue,
+        'F': chalk.cyan.underline,
     };
 
     return scramble
         .trim()
         .split('')
         .map(char => {
-            const stylize = colorMap[char] || chalk.magenta;
+            const stylize = colorMap[char] || chalk.cyan;
             return stylize(char);
         })
         .join('');
