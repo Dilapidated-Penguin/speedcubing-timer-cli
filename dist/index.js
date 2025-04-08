@@ -64,23 +64,8 @@ let solve_labelled = false;
 const node_global_key_listener_1 = require("@futpib/node-global-key-listener");
 const listener = new node_global_key_listener_1.GlobalKeyboardListener();
 //*************************************************
+//*************************************************
 console.log(cli_title_json_1.string);
-function normalizeArg(arg) {
-    const aliases = {
-        fastest_solve: ['f', 'b', 'best', 'fast', 'fastest', 'fastest_time'],
-        slowest_solve: ['w', 's', 'worst', 'slow', 'slowest', 'slowest_timer'],
-        session_mean: ['m', 'mean', 'avg', 'average', 'session_mean'],
-        standard_deviation: ['dev', 'standard_deviation', 'std.dev', 'deviation', 'd'],
-        variance: ['var', 'v', 'variance', 'var.'],
-        all: ['*']
-    };
-    for (const [key, val] of Object.entries(aliases)) {
-        if ((key === arg) || (val.includes(arg))) {
-            return key;
-        }
-    }
-    return null;
-}
 program
     .version("1.0.18")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)");
@@ -94,6 +79,23 @@ program
     fastest_solve \n
     slowest_solve`)
     .action((property) => {
+    const property_keys = ['fastest_solve', 'session_mean', 'standard_deviation', 'variance', 'slowest_solve', 'all'];
+    function normalizeArg(arg) {
+        const aliases = {
+            fastest_solve: ['f', 'b', 'best', 'fast', 'fastest', 'fastest_time'],
+            slowest_solve: ['w', 's', 'worst', 'slow', 'slowest', 'slowest_timer'],
+            session_mean: ['m', 'mean', 'avg', 'average', 'session_mean'],
+            standard_deviation: ['dev', 'standard_deviation', 'std.dev', 'deviation', 'd'],
+            variance: ['var', 'v', 'variance', 'var.'],
+            all: ['*']
+        };
+        for (const [key, val] of Object.entries(aliases)) {
+            if ((key === arg) || (val.includes(arg))) {
+                return key;
+            }
+        }
+        return null;
+    }
     const normalized_property = normalizeArg(property);
     if (normalized_property !== null) {
         const session_data = storage.loadStats().session_data;
@@ -114,7 +116,7 @@ program
             };
             switch (normalized_property) {
                 case 'all':
-                    const data = ['fastest_solve', 'session_mean', 'standard_deviation', 'variance', 'slowest_solve'].map((property) => {
+                    const data = property_keys.map((property) => {
                         return retrieve_data(property);
                     });
                     (0, nodeplotlib_1.plot)(data);

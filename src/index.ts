@@ -7,11 +7,11 @@ import {event_choices,events_list} from './events.json'
 import {activeWindowSync} from 'get-windows';
 import { createTable } from 'nice-table';
 
-import { select,number, input,Separator} from '@inquirer/prompts';
+import { select,number, input} from '@inquirer/prompts';
 import { plot, Plot } from 'nodeplotlib'
 import { spawn } from 'child_process';
 
-import {settings, sessionLog, session_statistics, SolveInstance} from "./util/interfaces"
+import {settings, sessionLog, session_statistics} from "./util/interfaces"
 import * as storage from "./util/storage"
 import  * as settingsUtil from "./util/settings"
 import path from 'path'
@@ -42,25 +42,13 @@ import {GlobalKeyboardListener} from "@futpib/node-global-key-listener";
 const listener = new GlobalKeyboardListener();
 //*************************************************
 
+//*************************************************
+
+
 console.log(cli_title_string)
-function normalizeArg(arg:string):string|null{
-    const aliases = {
-        fastest_solve: ['f','b','best','fast','fastest','fastest_time'],
-        slowest_solve: ['w','s','worst','slow','slowest','slowest_timer'],
-        session_mean: ['m','mean','avg','average','session_mean'],
-        standard_deviation:['dev','standard_deviation','std.dev','deviation','d'],
-        variance:['var','v','variance','var.'],
-        all:['*']
-    }
-    for(const [key,val] of Object.entries(aliases)){
-        if((key === arg) || (val.includes(arg))){
-            return key
-        }
-    }
-    return null
-}
+
 program
-    .version("1.0.18")
+    .version("1.0.19")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)")
 
 program
@@ -73,38 +61,61 @@ program
     fastest_solve \n
     slowest_solve`)
     .action((property:string)=>{
-        const normalized_property:string = normalizeArg(property)
+        const property_keys = ['fastest_solve','session_mean','standard_deviation','variance','slowest_solve','all'] as const;
+        type propertyKey = typeof property_keys[number]
+
+        function normalizeArg(arg:string):propertyKey|null{
+            const aliases = {
+                fastest_solve: ['f','b','best','fast','fastest','fastest_time'],
+                slowest_solve: ['w','s','worst','slow','slowest','slowest_timer'],
+                session_mean: ['m','mean','avg','average','session_mean'],
+                standard_deviation:['dev','standard_deviation','std.dev','deviation','d'],
+                variance:['var','v','variance','var.'],
+                all:['*']
+            }
+        
+            for(const [key,val] of Object.entries(aliases)){
+                if((key === arg) || (val.includes(arg))){
+                    return key as keyof session_statistics
+                }
+            }
+            return null
+        }
+
+        const normalized_property:propertyKey = normalizeArg(property)
         
         if(normalized_property !== null){
-            const session_data:Map<string,session_statistics> =storage.loadStats().session_data
+            const session_data:Map<string,session_statistics> = storage.loadStats().session_data
 
             if(session_data.size >=0){
-
 
                 const x_dates:Date[] = Array.from(session_data.keys())
                     .map((ISO_date)=>{
                         return new Date(ISO_date)
                     })
-                const retrieve_data = (property:string):Plot=>{
+                const retrieve_data = (property:propertyKey):Plot=>{
                     const y_data:number[] = x_dates.map((date:Date)=>{
                         return session_data.get(date.toISOString())[property]
                     })
-                    
+                
                     return {
                         x:x_dates,
                         y:y_data,
                         type: 'scatter'
                     }
                 }
+                
+
                 switch(normalized_property){
                     case 'all':
-                        const data:Plot[] = ['fastest_solve','session_mean','standard_deviation','variance','slowest_solve'].map((property:string)=>{
+
+                        const data:Plot[] = property_keys.map((property:propertyKey)=>{
                             return retrieve_data(property)
                         })
                         plot(data)
                     break;
                     default:
-                        plot([retrieve_data(normalized_property)])
+                        plot([retrieve_data(normalized_property as keyof session_statistics)])
                     break;
                 }
 
