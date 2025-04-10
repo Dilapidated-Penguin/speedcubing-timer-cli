@@ -26,7 +26,7 @@ const program = new Command();
 var saved_data = storage.loadData()
 
 //main_window_id
-let main_window_id:number| null = null
+let main_window_id:number | null = null
 //timer variables**********************************
 
 let timer_running:boolean = false
@@ -50,7 +50,7 @@ const listener = new GlobalKeyboardListener();
 console.log(cli_title_string)
 
 program
-    .version("1.0.19")
+    .version("1.0.20")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)")
 
 program
@@ -403,6 +403,7 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
             if((e.name === "SPACE") && (e.state === "DOWN")){
                 listener.kill()
                 new_scramble = true
+                space_been_pressed = true
                 solve_labelled = false
                 next = true
                 startListener(current_settings,event,session_date,option)
