@@ -50,7 +50,7 @@ const listener = new GlobalKeyboardListener();
 console.log(cli_title_string)
 
 program
-    .version("1.0.20")
+    .version("1.0.21")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)")
 
 program
@@ -66,7 +66,7 @@ program
         const property_keys = ['fastest_solve','session_mean','standard_deviation','variance','slowest_solve','all'] as const;
         type propertyKey = typeof property_keys[number]
 
-        function normalizeArg(arg:string):propertyKey|null{
+        function normalizeArg(arg:string):propertyKey | null{
             const aliases = {
                 fastest_solve: ['f','b','best','fast','fastest','fastest_time'],
                 slowest_solve: ['w','s','worst','slow','slowest','slowest_timer'],
@@ -426,8 +426,11 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
             console.log(colour(`${inspection_time-count}`))
     
             if((count >= inspection_time) || (next)){
+                listener.kill()
                 clearInterval(intervalid)
-                //failure to start solve
+                if(count >= inspection_time){
+                    console.log(chalk.underline(`Failure to start solve`))
+                }
             }
         },1000)
     
@@ -450,7 +453,7 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                 if(current_session.entries.length>=1){
                     current_session.entries.pop()
                     console.log(chalk.blue(`Last solve deleted`))
-    
+                    
                     saved_data.data.set(session_date_ISO,current_session)
                     storage.saveData(saved_data)
                 }else{
@@ -505,12 +508,18 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                 }
     
             }
+            const pressedState = ()=>{
+                space_been_pressed = true
+                process.stdout.write(chalk.bgRed('...') +`\n`);
+            }
+           if((option.i || option.inspect) && !space_been_pressed){
+               pressedState()
+           }
             if((e.name === "SPACE") && (new_scramble)){
                 if(!timer_running){
                     if(e.state === "DOWN"){
                         if(!space_been_pressed){
-                            space_been_pressed = true
-                            process.stdout.write(chalk.bgRed('...') +`\n`);
+                            pressedState()
                         }else{
                             process.stdout.write("\b \b")
                         }

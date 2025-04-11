@@ -69,7 +69,7 @@ const listener = new node_global_key_listener_1.GlobalKeyboardListener();
 //*************************************************
 console.log(cli_title_json_1.string);
 program
-    .version("1.0.20")
+    .version("1.0.21")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)");
 program
     .command('graph')
@@ -392,8 +392,11 @@ function newSolve(current_settings, event, session_date, option) {
             }
             console.log(colour(`${inspection_time - count}`));
             if ((count >= inspection_time) || (next)) {
+                listener.kill();
                 (0, timers_1.clearInterval)(intervalid);
-                //failure to start solve
+                if (count >= inspection_time) {
+                    console.log(chalk_1.default.underline(`Failure to start solve`));
+                }
             }
         }, 1000);
     }
@@ -466,12 +469,18 @@ function newSolve(current_settings, event, session_date, option) {
                     return;
                 }
             }
+            const pressedState = () => {
+                space_been_pressed = true;
+                process.stdout.write(chalk_1.default.bgRed('...') + `\n`);
+            };
+            if ((option.i || option.inspect) && !space_been_pressed) {
+                pressedState();
+            }
             if ((e.name === "SPACE") && (new_scramble)) {
                 if (!timer_running) {
                     if (e.state === "DOWN") {
                         if (!space_been_pressed) {
-                            space_been_pressed = true;
-                            process.stdout.write(chalk_1.default.bgRed('...') + `\n`);
+                            pressedState();
                         }
                         else {
                             process.stdout.write("\b \b");
