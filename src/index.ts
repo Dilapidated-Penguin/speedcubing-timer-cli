@@ -50,7 +50,7 @@ const listener = new GlobalKeyboardListener();
 console.log(cli_title_string)
 
 program
-    .version("1.0.21")
+    .version("1.0.22")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)")
 
 program
@@ -394,22 +394,37 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
     process.stdout.write("\x1b[2K")
     console.log(stylizeScramble(scramble))
 
+    const pressedState = ()=>{
+        space_been_pressed = true
+        process.stdout.write(chalk.bgRed('...') +`\n`);
+    }
 
     function inspection_time(inspection_time:number = 15){
         let count:number = 0
         let next:boolean = false
+        let inspect_ended:boolean = false
 
         listener.addListener(function (e, down) {
-            if((e.name === "SPACE") && (e.state === "DOWN")){
-                listener.kill()
-                new_scramble = true
-                space_been_pressed = true
-                solve_labelled = false
-                next = true
-                startListener(current_settings,event,session_date,option)
+            if((e.name === "SPACE")){
+                if(e.state === "DOWN"){
+                    if(!space_been_pressed){
+                        inspect_ended = true
+                        pressedState()
+                    }
+                }else{
+                    if(inspect_ended){
+                        listener.kill()
+                        next = true 
+                        new_scramble = true
+                        space_been_pressed = true
+                        solve_labelled = false
+                        startListener(current_settings,event,session_date,option)
+                    }
+                }
             }
         })
-    
+        process.stdout.write("\b \b")
+        
         const intervalid = global.setInterval(()=>{
             count++
             process.stdout.write(`\x1b[2K\r`)
@@ -422,13 +437,14 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
             {colour = chalk.bold.yellow}
             else
             {colour = chalk.bold.red}
-    
-            console.log(colour(`${inspection_time-count}`))
+
+            
+            process.stdout.write(colour(`${inspection_time-count}`))
     
             if((count >= inspection_time) || (next)){
-                listener.kill()
                 clearInterval(intervalid)
                 if(count >= inspection_time){
+                    listener.kill()
                     console.log(chalk.underline(`Failure to start solve`))
                 }
             }
@@ -441,6 +457,7 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
         startListener(current_settings,event,session_date,option)
     }
     function startListener(current_settings:settings,event: string,session_date:Date,option:any){
+        const inspect_time:boolean = (option.i || option.inspect)
         listener.addListener(function (e, down) {
             process.stdout.write('\x1b[2K\r');
             
@@ -508,13 +525,11 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                 }
     
             }
-            const pressedState = ()=>{
-                space_been_pressed = true
-                process.stdout.write(chalk.bgRed('...') +`\n`);
-            }
-           if((option.i || option.inspect) && !space_been_pressed){
+
+           if((inspect_time) && !space_been_pressed){
                pressedState()
            }
+           
             if((e.name === "SPACE") && (new_scramble)){
                 if(!timer_running){
                     if(e.state === "DOWN"){

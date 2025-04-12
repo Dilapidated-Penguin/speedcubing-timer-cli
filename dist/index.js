@@ -69,7 +69,7 @@ const listener = new node_global_key_listener_1.GlobalKeyboardListener();
 //*************************************************
 console.log(cli_title_json_1.string);
 program
-    .version("1.0.21")
+    .version("1.0.22")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)");
 program
     .command('graph')
@@ -364,17 +364,32 @@ function newSolve(current_settings, event, session_date, option) {
     console.log(chalk_1.default.bold.red(`Scramble:`));
     process.stdout.write("\x1b[2K");
     console.log(stylizeScramble(scramble));
+    const pressedState = () => {
+        space_been_pressed = true;
+        process.stdout.write(chalk_1.default.bgRed('...') + `\n`);
+    };
     function inspection_time(inspection_time = 15) {
         let count = 0;
         let next = false;
+        let inspect_ended = false;
         listener.addListener(function (e, down) {
-            if ((e.name === "SPACE") && (e.state === "DOWN")) {
-                listener.kill();
-                new_scramble = true;
-                space_been_pressed = true;
-                solve_labelled = false;
-                next = true;
-                startListener(current_settings, event, session_date, option);
+            if ((e.name === "SPACE")) {
+                if (e.state === "DOWN") {
+                    if (!space_been_pressed) {
+                        inspect_ended = true;
+                        pressedState();
+                    }
+                }
+                else {
+                    if (inspect_ended) {
+                        listener.kill();
+                        next = true;
+                        new_scramble = true;
+                        space_been_pressed = true;
+                        solve_labelled = false;
+                        startListener(current_settings, event, session_date, option);
+                    }
+                }
             }
         });
         const intervalid = global.setInterval(() => {
@@ -390,9 +405,9 @@ function newSolve(current_settings, event, session_date, option) {
             else {
                 colour = chalk_1.default.bold.red;
             }
-            console.log(colour(`${inspection_time - count}`));
+            process.stdout.write("\b \b");
+            process.stdout.write(colour(`${inspection_time - count}`));
             if ((count >= inspection_time) || (next)) {
-                listener.kill();
                 (0, timers_1.clearInterval)(intervalid);
                 if (count >= inspection_time) {
                     console.log(chalk_1.default.underline(`Failure to start solve`));
@@ -407,6 +422,7 @@ function newSolve(current_settings, event, session_date, option) {
         startListener(current_settings, event, session_date, option);
     }
     function startListener(current_settings, event, session_date, option) {
+        const inspect_time = (option.i || option.inspect);
         listener.addListener(function (e, down) {
             process.stdout.write('\x1b[2K\r');
             if ((0, get_windows_1.activeWindowSync)().id !== main_window_id) {
@@ -469,11 +485,7 @@ function newSolve(current_settings, event, session_date, option) {
                     return;
                 }
             }
-            const pressedState = () => {
-                space_been_pressed = true;
-                process.stdout.write(chalk_1.default.bgRed('...') + `\n`);
-            };
-            if ((option.i || option.inspect) && !space_been_pressed) {
+            if ((inspect_time) && !space_been_pressed) {
                 pressedState();
             }
             if ((e.name === "SPACE") && (new_scramble)) {
