@@ -4,7 +4,7 @@ import { Command } from "commander";
 
 import {event_choices,events_list} from './events.json'
 
-import {activeWindowSync} from 'get-windows';
+import {activeWindowSync, Result} from 'get-windows';
 import { createTable } from 'nice-table';
 
 import { select,number, input} from '@inquirer/prompts';
@@ -15,6 +15,8 @@ import {settings, sessionLog, session_statistics} from "./util/interfaces"
 import * as storage from "./util/storage"
 import  * as settingsUtil from "./util/settings"
 import path from 'path'
+
+const readline = require('readline');
 
 var Scrambow = require('scrambow').Scrambow;
 const cfonts = require('cfonts');
@@ -38,7 +40,7 @@ let new_scramble:boolean = false
 let solve_labelled:boolean = false
 let inspected:boolean = false
 import {GlobalKeyboardListener} from "@futpib/node-global-key-listener";
-import { setTimeout } from "timers/promises";
+
 import { clearInterval } from "timers";
 
 const listener = new GlobalKeyboardListener();
@@ -50,7 +52,7 @@ const listener = new GlobalKeyboardListener();
 console.log(cli_title_string)
 
 program
-    .version("1.0.22")
+    .version("1.0.23")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)")
 
 program
@@ -381,7 +383,8 @@ function startSession(event: string,options:any):void{
 function newSolve(current_settings:settings,event: string,session_date:Date,option:any):void{
     const session_date_ISO:string = session_date.toISOString()
     var scramble_generator = new Scrambow()
-    process.stdin.resume();
+
+    let lines_after_counter:number = 0
 
     let scramble: string = scramble_generator
         .setType(event)
@@ -392,30 +395,40 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
     process.stdout.write(`\x1b[2K\r`)
     console.log(chalk.bold.red(`Scramble:`))
     process.stdout.write("\x1b[2K")
-    console.log(stylizeScramble(scramble))
+    console.log(stylizeScramble(scramble) + '\n')
 
     const pressedState = ()=>{
         space_been_pressed = true
-        process.stdout.write(chalk.bgRed('...') +`\n`);
+        belowCounter(chalk.bgRed('...'))
     }
 
+    const belowCounter = (text:string)=>{
+        readline.clearLine(process.stdout, 0);
+        readline.cursorTo(process.stdout, 0)
+        process.stdout.write(`${text}\n`)
+        readline.cursorTo(process.stdout, 0)
+        lines_after_counter++
+    }
     function inspection_time(inspection_time:number = 15){
-        let count:number = 0
-        let next:boolean = false
-        let inspect_ended:boolean = false
+        //process.stdout.write("\b \b")
+
+        let count:number = -1
+        let solve_started:boolean = false
+        space_been_pressed  = false
 
         listener.addListener(function (e, down) {
             if((e.name === "SPACE")){
                 if(e.state === "DOWN"){
                     if(!space_been_pressed){
-                        inspect_ended = true
                         pressedState()
                     }
                 }else{
-                    if(inspect_ended){
+                    if(space_been_pressed){
+                        clearInterval(intervalid)
+
                         listener.kill()
-                        next = true 
                         new_scramble = true
+                        solve_started = true
                         space_been_pressed = true
                         solve_labelled = false
                         startListener(current_settings,event,session_date,option)
@@ -423,11 +436,10 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                 }
             }
         })
-        process.stdout.write("\b \b")
+        
         
         const intervalid = global.setInterval(()=>{
             count++
-            process.stdout.write(`\x1b[2K\r`)
     
             let colour = null
     
@@ -438,10 +450,16 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
             else
             {colour = chalk.bold.red}
 
-            
-            process.stdout.write(colour(`${inspection_time-count}`))
+            //udpate the timer
+            readline.cursorTo(process.stdout, 0)
+            readline.moveCursor(process.stdout, 0, -lines_after_counter- 1);
+            readline.clearLine(process.stdout, 0);
+            process.stdout.write(`${colour(`${inspection_time-count}`)}`);
+            readline.moveCursor(process.stdout, 0, lines_after_counter+ 1);
+            readline.cursorTo(process.stdout, 0)
+            //process.stdout.write(`\r${colour(`${inspection_time-count}`)}`)
     
-            if((count >= inspection_time) || (next)){
+            if((count >= inspection_time) || (solve_started)){
                 clearInterval(intervalid)
                 if(count >= inspection_time){
                     listener.kill()
@@ -459,9 +477,9 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
     function startListener(current_settings:settings,event: string,session_date:Date,option:any){
         const inspect_time:boolean = (option.i || option.inspect)
         listener.addListener(function (e, down) {
-            process.stdout.write('\x1b[2K\r');
             
-            if(activeWindowSync().id !== main_window_id){
+            const current_window_id:Result | null = activeWindowSync()
+            if(current_window_id?.id !== main_window_id){
                 return
             }
     
@@ -518,35 +536,45 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                         console.log(chalk.redBright(`There exist no entries in the current session to label`))
                     }
                     console.log(`\n \n`)
-                    return                
                 }else{
                     console.log(chalk.redBright(`The solve has already been labelled.`))
-                    return
                 }
-    
+                return
             }
-
-           if((inspect_time) && !space_been_pressed){
-               pressedState()
+            const releasedState = ()=>{
+                space_been_pressed = false
+                process.stdout.write("\x1b[F"); //move back up a line
+                process.stdout.write('\x1b[2K');  // Clear the line
+                console.log(chalk.bgGreenBright('SOLVE') +
+                '\n \n');
+                
+                startTimer()
            }
-           
+
+           if(inspect_time){
+               //if(!space_been_pressed){
+               //     pressedState()
+               //     process.stdout.write("\n")
+               //}else{
+               //     releasedState()
+               //}
+               if(space_been_pressed){
+                   releasedState()
+               }
+           }
+
             if((e.name === "SPACE") && (new_scramble)){
                 if(!timer_running){
                     if(e.state === "DOWN"){
                         if(!space_been_pressed){
                             pressedState()
+                            process.stdout.write("\n")
                         }else{
                             process.stdout.write("\b \b")
                         }
                     }else{
                         if(space_been_pressed){
-                            space_been_pressed = false
-                            process.stdout.write("\x1b[F"); //move back up a line
-                            process.stdout.write('\x1b[2K');  // Clear the line
-                            console.log(chalk.bgGreenBright('SOLVE') +
-                            '\n \n');
-                            
-                            startTimer()
+                            releasedState()
                         }
                     }
                 }else{
@@ -663,11 +691,9 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                 }
                 return
             } 
-            
+            process.stdout.write('\x1b[2K\r');
         });
     }
-
-
 }
 function stopTimer():number{
     if (!startTime) return;

@@ -48,6 +48,7 @@ const child_process_1 = require("child_process");
 const storage = __importStar(require("./util/storage"));
 const settingsUtil = __importStar(require("./util/settings"));
 const path_1 = __importDefault(require("path"));
+const readline = require('readline');
 var Scrambow = require('scrambow').Scrambow;
 const cfonts = require('cfonts');
 const cli_title_json_1 = require("./cli-title.json");
@@ -354,7 +355,7 @@ function startSession(event, options) {
 function newSolve(current_settings, event, session_date, option) {
     const session_date_ISO = session_date.toISOString();
     var scramble_generator = new Scrambow();
-    process.stdin.resume();
+    let lines_after_counter = 0;
     let scramble = scramble_generator
         .setType(event)
         .setLength(current_settings.scramble_length)
@@ -363,28 +364,36 @@ function newSolve(current_settings, event, session_date, option) {
     process.stdout.write(`\x1b[2K\r`);
     console.log(chalk_1.default.bold.red(`Scramble:`));
     process.stdout.write("\x1b[2K");
-    console.log(stylizeScramble(scramble));
+    console.log(stylizeScramble(scramble) + '\n');
     const pressedState = () => {
         space_been_pressed = true;
-        process.stdout.write(chalk_1.default.bgRed('...') + `\n`);
+        belowCounter(chalk_1.default.bgRed('...'));
+    };
+    const belowCounter = (text) => {
+        readline.clearLine(process.stdout, 0);
+        readline.cursorTo(process.stdout, 0);
+        process.stdout.write(`${text}\n`);
+        readline.cursorTo(process.stdout, 0);
+        lines_after_counter++;
     };
     function inspection_time(inspection_time = 15) {
-        let count = 0;
-        let next = false;
-        let inspect_ended = false;
+        //process.stdout.write("\b \b")
+        let count = -1;
+        let solve_started = false;
+        space_been_pressed = false;
         listener.addListener(function (e, down) {
             if ((e.name === "SPACE")) {
                 if (e.state === "DOWN") {
                     if (!space_been_pressed) {
-                        inspect_ended = true;
                         pressedState();
                     }
                 }
                 else {
-                    if (inspect_ended) {
+                    if (space_been_pressed) {
+                        (0, timers_1.clearInterval)(intervalid);
                         listener.kill();
-                        next = true;
                         new_scramble = true;
+                        solve_started = true;
                         space_been_pressed = true;
                         solve_labelled = false;
                         startListener(current_settings, event, session_date, option);
@@ -394,7 +403,6 @@ function newSolve(current_settings, event, session_date, option) {
         });
         const intervalid = global.setInterval(() => {
             count++;
-            process.stdout.write(`\x1b[2K\r`);
             let colour = null;
             if (count <= 5) {
                 colour = chalk_1.default.bold.green;
@@ -405,11 +413,18 @@ function newSolve(current_settings, event, session_date, option) {
             else {
                 colour = chalk_1.default.bold.red;
             }
-            process.stdout.write("\b \b");
-            process.stdout.write(colour(`${inspection_time - count}`));
-            if ((count >= inspection_time) || (next)) {
+            //udpate the timer
+            readline.cursorTo(process.stdout, 0);
+            readline.moveCursor(process.stdout, 0, -lines_after_counter - 1);
+            readline.clearLine(process.stdout, 0);
+            process.stdout.write(`${colour(`${inspection_time - count}`)}`);
+            readline.moveCursor(process.stdout, 0, lines_after_counter + 1);
+            readline.cursorTo(process.stdout, 0);
+            //process.stdout.write(`\r${colour(`${inspection_time-count}`)}`)
+            if ((count >= inspection_time) || (solve_started)) {
                 (0, timers_1.clearInterval)(intervalid);
                 if (count >= inspection_time) {
+                    listener.kill();
                     console.log(chalk_1.default.underline(`Failure to start solve`));
                 }
             }
@@ -424,8 +439,8 @@ function newSolve(current_settings, event, session_date, option) {
     function startListener(current_settings, event, session_date, option) {
         const inspect_time = (option.i || option.inspect);
         listener.addListener(function (e, down) {
-            process.stdout.write('\x1b[2K\r');
-            if ((0, get_windows_1.activeWindowSync)().id !== main_window_id) {
+            const current_window_id = (0, get_windows_1.activeWindowSync)();
+            if ((current_window_id === null || current_window_id === void 0 ? void 0 : current_window_id.id) !== main_window_id) {
                 return;
             }
             if ((e.name === "D") && (e.state === "UP") && (!new_scramble)) {
@@ -478,21 +493,35 @@ function newSolve(current_settings, event, session_date, option) {
                         console.log(chalk_1.default.redBright(`There exist no entries in the current session to label`));
                     }
                     console.log(`\n \n`);
-                    return;
                 }
                 else {
                     console.log(chalk_1.default.redBright(`The solve has already been labelled.`));
-                    return;
                 }
+                return;
             }
-            if ((inspect_time) && !space_been_pressed) {
-                pressedState();
+            const releasedState = () => {
+                space_been_pressed = false;
+                process.stdout.write("\x1b[F"); //move back up a line
+                process.stdout.write('\x1b[2K'); // Clear the line
+                console.log(chalk_1.default.bgGreenBright('SOLVE') +
+                    '\n \n');
+                startTimer();
+            };
+            if (inspect_time) {
+                if (!space_been_pressed) {
+                    pressedState();
+                    process.stdout.write("\n");
+                }
+                else {
+                    releasedState();
+                }
             }
             if ((e.name === "SPACE") && (new_scramble)) {
                 if (!timer_running) {
                     if (e.state === "DOWN") {
                         if (!space_been_pressed) {
                             pressedState();
+                            process.stdout.write("\n");
                         }
                         else {
                             process.stdout.write("\b \b");
@@ -500,12 +529,7 @@ function newSolve(current_settings, event, session_date, option) {
                     }
                     else {
                         if (space_been_pressed) {
-                            space_been_pressed = false;
-                            process.stdout.write("\x1b[F"); //move back up a line
-                            process.stdout.write('\x1b[2K'); // Clear the line
-                            console.log(chalk_1.default.bgGreenBright('SOLVE') +
-                                '\n \n');
-                            startTimer();
+                            releasedState();
                         }
                     }
                 }
@@ -613,6 +637,7 @@ function newSolve(current_settings, event, session_date, option) {
                 }
                 return;
             }
+            process.stdout.write('\x1b[2K\r');
         });
     }
 }
