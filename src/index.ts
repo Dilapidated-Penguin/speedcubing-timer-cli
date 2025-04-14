@@ -49,10 +49,10 @@ const listener = new GlobalKeyboardListener();
 //*************************************************
 
 
-console.log(cli_title_string)
+//console.log(cli_title_string)
 
 program
-    .version("1.0.23")
+    .version("1.0.24")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)")
 
 program
@@ -75,7 +75,7 @@ program
                 session_mean: ['m','mean','avg','average','session_mean'],
                 standard_deviation:['dev','standard_deviation','std.dev','deviation','d'],
                 variance:['var','v','variance','var.'],
-                all:['*']
+                all:['a']
             }
         
             for(const [key,val] of Object.entries(aliases)){
@@ -105,7 +105,8 @@ program
                     return {
                         x:x_dates,
                         y:y_data,
-                        type: 'scatter'
+                        type: 'scatter',
+                        name:property
                     }
                 }
                 
@@ -408,41 +409,59 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
         process.stdout.write(`${text}\n`)
         readline.cursorTo(process.stdout, 0)
         lines_after_counter++
+        return lines_after_counter
+    }
+    function newSolvePrompt(){
+        console.log(`\n`)
+        console.log(chalk.dim(`To label/delete the last solve simply use (`) +
+        chalk.italic.yellow(`e`) + chalk.dim(`/`) + chalk.italic.yellow(`d`) +
+        chalk.dim(`) respectively`))
+
+        console.log(chalk.dim(`Exit session mode using`), chalk.green(`Ctrl+C`) +
+        `\n`)
+
+        console.log(chalk.bold.magentaBright(`Whenever ready use the spacebar to start a new solve using`) + chalk.italic.yellow(` n`)+
+        `\n \n`)                                
     }
     function inspection_time(inspection_time:number = 15){
-        //process.stdout.write("\b \b")
 
         let count:number = -1
-        let solve_started:boolean = false
         space_been_pressed  = false
+        let timer_started:boolean = false
 
         listener.addListener(function (e, down) {
             if((e.name === "SPACE")){
                 if(e.state === "DOWN"){
+                    if(!timer_started){
+                        timer_started = true
+                        belowCounter(chalk.underline(`inspection started`))
+                    }else
                     if(!space_been_pressed){
                         pressedState()
                     }
                 }else{
-                    if(space_been_pressed){
+                    if(space_been_pressed && timer_started){
                         clearInterval(intervalid)
 
                         listener.kill()
                         new_scramble = true
-                        solve_started = true
                         space_been_pressed = true
                         solve_labelled = false
+
                         startListener(current_settings,event,session_date,option)
                     }
                 }
             }
         })
-        
-        
+
+
         const intervalid = global.setInterval(()=>{
+            if(!timer_started){
+                return
+            }
             count++
     
             let colour = null
-    
             if(count <= 5)
             {colour = chalk.bold.green}
             else if( count<=10 )
@@ -457,43 +476,76 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
             process.stdout.write(`${colour(`${inspection_time-count}`)}`);
             readline.moveCursor(process.stdout, 0, lines_after_counter+ 1);
             readline.cursorTo(process.stdout, 0)
-            //process.stdout.write(`\r${colour(`${inspection_time-count}`)}`)
     
-            if((count >= inspection_time) || (solve_started)){
-                clearInterval(intervalid)
-                if(count >= inspection_time){
+            if(count >= inspection_time){
+                if(count = inspection_time){
                     listener.kill()
-                    console.log(chalk.underline(`Failure to start solve`))
+                    clearInterval(intervalid)
+
+                    //console.log(chalk.underline(`Failure to start solve`))
+                    newSolvePrompt()
+                    
+                    listener.kill()
+                    new_scramble = true
+                    solve_labelled = false
+                    space_been_pressed = false
+                    newSolve(current_settings,event,session_date,option)
                 }
             }
         },1000)
     
     }
     if(option.i || option.inspect){
-        inspection_time(15)
+        inspection_time(current_settings.inspection_sec)
     }else{
         startListener(current_settings,event,session_date,option)
     }
     function startListener(current_settings:settings,event: string,session_date:Date,option:any){
-        const inspect_time:boolean = (option.i || option.inspect)
+
+        const releasedState = ()=>{
+            space_been_pressed = false
+
+            readline.moveCursor(process.stdout, 0,-1);
+            readline.cursorTo(process.stdout, 0)
+            readline.clearLine(process.stdout, 0)
+            process.stdout.write(chalk.bgGreenBright('SOLVE') +
+            '\n \n')
+            readline.cursorTo(process.stdout, 0)
+            /*
+                readline.clearLine(process.stdout, 0)
+                readline.cursorTo(process.stdout, 0)
+                process.stdout.write(`${text}\n`)
+                readline.cursorTo(process.stdout, 0)
+            */
+            startTimer()
+        }
+    
+        if(option.i || option.inspect){
+            //console.log(`space been pressed: ${space_been_pressed}`)
+            if(space_been_pressed){
+                releasedState()
+            }
+        }
         listener.addListener(function (e, down) {
             
-            const current_window_id:Result | null = activeWindowSync()
-            if(current_window_id?.id !== main_window_id){
+            if(activeWindowSync()?.id !== main_window_id){
                 return
             }
     
             if((e.name === "D") && (e.state === "UP") && (!new_scramble)){
-                const current_session:sessionLog = saved_data.data.get(session_date_ISO)
-                if(current_session.entries.length>=1){
-                    current_session.entries.pop()
-                    console.log(chalk.blue(`Last solve deleted`))
-                    
-                    saved_data.data.set(session_date_ISO,current_session)
-                    storage.saveData(saved_data)
-                }else{
-                    console.log(chalk.red(`There exist no entries in the current session to delete`))
+                const deleteEntry =  (date_ISO:string)=>{
+                    const current_session:sessionLog = saved_data.data.get(date_ISO)
+                    if(current_session.entries.length>=1){
+                        current_session.entries.pop()
+                        console.log(chalk.blue(`Last solve deleted`))
+                        
+                        saved_data.data.set(date_ISO,current_session)
+                        storage.saveData(saved_data)
+                    }else{
+                        console.log(chalk.red(`There exist no entries in the current session to delete`))
+                    }
                 }
+                deleteEntry(session_date_ISO)
                 return 
             }
             if((e.name === "N") && (e.state === "UP")){
@@ -502,6 +554,7 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                     listener.kill()
                     new_scramble = true
                     solve_labelled = false
+                    space_been_pressed = false
                     newSolve(current_settings,event,session_date,option)
                 }
                 return
@@ -522,7 +575,7 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                             ]
                         }).then((answer:string)=>{
                             current_session.entries.at(-1).label = answer
-    
+
                             saved_data.data.set(session_date_ISO,current_session)
                             storage.saveData(saved_data)
     
@@ -541,27 +594,7 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                 }
                 return
             }
-            const releasedState = ()=>{
-                space_been_pressed = false
-                process.stdout.write("\x1b[F"); //move back up a line
-                process.stdout.write('\x1b[2K');  // Clear the line
-                console.log(chalk.bgGreenBright('SOLVE') +
-                '\n \n');
-                
-                startTimer()
-           }
 
-           if(inspect_time){
-               //if(!space_been_pressed){
-               //     pressedState()
-               //     process.stdout.write("\n")
-               //}else{
-               //     releasedState()
-               //}
-               if(space_been_pressed){
-                   releasedState()
-               }
-           }
 
             if((e.name === "SPACE") && (new_scramble)){
                 if(!timer_running){
@@ -669,20 +702,10 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                                     return `${titles[index]}: ${chalk.bold(current_stats[stat_name].toFixed(3))}`
                                 })
                                 .join(chalk.blue(` | `))
+                            console.log(stats_string + `\n`)
                             
-                                console.log(stats_string + `\n`)
-    
-                            console.log(`\n`)
-                            console.log(chalk.dim(`To label/delete the last solve simply use (`) +
-                            chalk.italic.yellow(`e`) + chalk.dim(`/`) + chalk.italic.yellow(`d`) +
-                            chalk.dim(`) respectively`))
-    
-                            console.log(chalk.dim(`Exit session mode using`), chalk.green(`Ctrl+C`) +
-                            `\n`)
-    
-                            console.log(chalk.bold.magentaBright(`Whenever ready use the spacebar to start a new solve using`) + chalk.italic.yellow(` n`)+
-                            `\n \n`)
                         }
+                        newSolvePrompt()
                         //reset
                         timer_running = false
                         startTime = null
