@@ -15,7 +15,8 @@ function loadSettings() {
     if (!fs_1.default.existsSync(SETTINGS_FILE)) {
         return {
             scramble_length: 12,
-            show_session_menu_length: 5
+            show_session_menu_length: 5,
+            inspection_sec: 15
         };
     }
     else {
