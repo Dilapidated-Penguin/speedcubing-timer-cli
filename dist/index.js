@@ -61,7 +61,6 @@ let startTime = null;
 let space_been_pressed = false;
 let new_scramble = false;
 let solve_labelled = false;
-let inspected = false;
 const node_global_key_listener_1 = require("@futpib/node-global-key-listener");
 const timers_1 = require("timers");
 const listener = new node_global_key_listener_1.GlobalKeyboardListener();
@@ -89,7 +88,7 @@ program
             session_mean: ['m', 'mean', 'avg', 'average', 'session_mean'],
             standard_deviation: ['dev', 'standard_deviation', 'std.dev', 'deviation', 'd'],
             variance: ['var', 'v', 'variance', 'var.'],
-            all: ['A', 'a']
+            all: ['a']
         };
         for (const [key, val] of Object.entries(aliases)) {
             if ((key === arg) || (val.includes(arg))) {
@@ -391,18 +390,23 @@ function newSolve(current_settings, event, session_date, option) {
         let count = -1;
         space_been_pressed = false;
         let timer_started = false;
+        let intervalid;
+        belowCounter(`tap the ${chalk_1.default.underline(`Spacebar`)} to start the inspection timer`);
         listener.addListener(function (e, down) {
             if ((e.name === "SPACE")) {
                 if (e.state === "DOWN") {
-                    if (!timer_started) {
-                        timer_started = true;
-                        belowCounter(chalk_1.default.underline(`inspection started`));
-                    }
-                    else if (!space_been_pressed) {
-                        pressedState();
+                    if (timer_started) {
+                        if (!space_been_pressed) {
+                            pressedState();
+                        }
                     }
                 }
                 else {
+                    if (!timer_started) {
+                        timer_started = true;
+                        startInspectionTimer();
+                        belowCounter(chalk_1.default.underline(`inspection started`));
+                    }
                     if (space_been_pressed && timer_started) {
                         (0, timers_1.clearInterval)(intervalid);
                         listener.kill();
@@ -414,42 +418,41 @@ function newSolve(current_settings, event, session_date, option) {
                 }
             }
         });
-        const intervalid = global.setInterval(() => {
-            if (!timer_started) {
-                return;
-            }
-            count++;
-            let colour = null;
-            if (count <= 5) {
-                colour = chalk_1.default.bold.green;
-            }
-            else if (count <= 10) {
-                colour = chalk_1.default.bold.yellow;
-            }
-            else {
-                colour = chalk_1.default.bold.red;
-            }
-            //udpate the timer
-            readline.cursorTo(process.stdout, 0);
-            readline.moveCursor(process.stdout, 0, -lines_after_counter - 1);
-            readline.clearLine(process.stdout, 0);
-            process.stdout.write(`${colour(`${inspection_time - count}`)}`);
-            readline.moveCursor(process.stdout, 0, lines_after_counter + 1);
-            readline.cursorTo(process.stdout, 0);
-            if (count >= inspection_time) {
-                if (count = inspection_time) {
-                    listener.kill();
-                    (0, timers_1.clearInterval)(intervalid);
-                    //console.log(chalk.underline(`Failure to start solve`))
-                    newSolvePrompt();
-                    listener.kill();
-                    new_scramble = true;
-                    solve_labelled = false;
-                    space_been_pressed = false;
-                    newSolve(current_settings, event, session_date, option);
+        function startInspectionTimer() {
+            intervalid = global.setInterval(() => {
+                count++;
+                let colour = null;
+                if (count <= 5) {
+                    colour = chalk_1.default.bold.green;
                 }
-            }
-        }, 1000);
+                else if (count <= 10) {
+                    colour = chalk_1.default.bold.yellow;
+                }
+                else {
+                    colour = chalk_1.default.bold.red;
+                }
+                //udpate the timer
+                readline.cursorTo(process.stdout, 0);
+                readline.moveCursor(process.stdout, 0, -lines_after_counter - 1);
+                readline.clearLine(process.stdout, 0);
+                process.stdout.write(`${colour(`${inspection_time - count}`)}`);
+                readline.moveCursor(process.stdout, 0, lines_after_counter + 1);
+                readline.cursorTo(process.stdout, 0);
+                if (count >= inspection_time) {
+                    if (count = inspection_time) {
+                        listener.kill();
+                        (0, timers_1.clearInterval)(intervalid);
+                        //console.log(chalk.underline(`Failure to start solve`))
+                        newSolvePrompt();
+                        listener.kill();
+                        new_scramble = true;
+                        solve_labelled = false;
+                        space_been_pressed = false;
+                        newSolve(current_settings, event, session_date, option);
+                    }
+                }
+            }, 1000);
+        }
     }
     if (option.i || option.inspect) {
         inspection_time(current_settings.inspection_sec);

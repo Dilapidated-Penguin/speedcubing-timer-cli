@@ -38,10 +38,11 @@ let startTime:[number,number] | null = null
 let space_been_pressed:boolean = false
 let new_scramble:boolean = false
 let solve_labelled:boolean = false
-let inspected:boolean = false
+
 import {GlobalKeyboardListener} from "@futpib/node-global-key-listener";
 
 import { clearInterval } from "timers";
+import { clear } from "console";
 
 const listener = new GlobalKeyboardListener();
 //*************************************************
@@ -428,18 +429,23 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
         let count:number = -1
         space_been_pressed  = false
         let timer_started:boolean = false
-
+        let intervalid
+        belowCounter(`tap the ${chalk.underline(`Spacebar`)} to start the inspection timer`)
         listener.addListener(function (e, down) {
             if((e.name === "SPACE")){
                 if(e.state === "DOWN"){
+                    if(timer_started){
+                        if(!space_been_pressed){
+                            pressedState()
+                        }
+                    }
+
+                }else{
                     if(!timer_started){
                         timer_started = true
+                        startInspectionTimer()
                         belowCounter(chalk.underline(`inspection started`))
-                    }else
-                    if(!space_been_pressed){
-                        pressedState()
                     }
-                }else{
                     if(space_been_pressed && timer_started){
                         clearInterval(intervalid)
 
@@ -453,46 +459,44 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                 }
             }
         })
-
-
-        const intervalid = global.setInterval(()=>{
-            if(!timer_started){
-                return
-            }
-            count++
+        function startInspectionTimer(){
+            intervalid = global.setInterval(()=>{
+                count++
+        
+                let colour = null
+                if(count <= 5)
+                {colour = chalk.bold.green}
+                else if( count<=10 )
+                {colour = chalk.bold.yellow}
+                else
+                {colour = chalk.bold.red}
     
-            let colour = null
-            if(count <= 5)
-            {colour = chalk.bold.green}
-            else if( count<=10 )
-            {colour = chalk.bold.yellow}
-            else
-            {colour = chalk.bold.red}
-
-            //udpate the timer
-            readline.cursorTo(process.stdout, 0)
-            readline.moveCursor(process.stdout, 0, -lines_after_counter- 1);
-            readline.clearLine(process.stdout, 0);
-            process.stdout.write(`${colour(`${inspection_time-count}`)}`);
-            readline.moveCursor(process.stdout, 0, lines_after_counter+ 1);
-            readline.cursorTo(process.stdout, 0)
+                //udpate the timer
+                readline.cursorTo(process.stdout, 0)
+                readline.moveCursor(process.stdout, 0, -lines_after_counter- 1);
+                readline.clearLine(process.stdout, 0);
+                process.stdout.write(`${colour(`${inspection_time-count}`)}`);
+                readline.moveCursor(process.stdout, 0, lines_after_counter+ 1);
+                readline.cursorTo(process.stdout, 0)
+        
+                if(count >= inspection_time){
+                    if(count = inspection_time){
+                        listener.kill()
+                        clearInterval(intervalid)
     
-            if(count >= inspection_time){
-                if(count = inspection_time){
-                    listener.kill()
-                    clearInterval(intervalid)
-
-                    //console.log(chalk.underline(`Failure to start solve`))
-                    newSolvePrompt()
-                    
-                    listener.kill()
-                    new_scramble = true
-                    solve_labelled = false
-                    space_been_pressed = false
-                    newSolve(current_settings,event,session_date,option)
+                        //console.log(chalk.underline(`Failure to start solve`))
+                        newSolvePrompt()
+                        
+                        listener.kill()
+                        new_scramble = true
+                        solve_labelled = false
+                        space_been_pressed = false
+                        newSolve(current_settings,event,session_date,option)
+                    }
                 }
-            }
-        },1000)
+            },1000)
+        }
+
     
     }
     if(option.i || option.inspect){
