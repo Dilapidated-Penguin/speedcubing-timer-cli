@@ -68,7 +68,7 @@ const listener = new node_global_key_listener_1.GlobalKeyboardListener();
 //*************************************************
 //console.log(cli_title_string)
 program
-    .version("1.0.24")
+    .version("1.0.26")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)");
 program
     .command('graph')
@@ -205,6 +205,26 @@ program
         }).catch((error) => {
             console.log(chalk_1.default.bgRed(`An error occurred`));
         });
+    }
+});
+program
+    .command('metronome')
+    .argument('[bpm]', 'the bpm of the metronome', '60')
+    .description('start a metronome')
+    .action((bpm) => {
+    function metronome(bpm) {
+        const interval = 60000 / bpm;
+        setInterval(() => {
+            process.stdout.write(`\x07`);
+        }, interval);
+    }
+    const bpm_number = Number(bpm);
+    if (!isNaN(bpm_number)) {
+        console.log(chalk_1.default.underline(`Use `) + chalk_1.default.bold(`Ctrl + C`) + chalk_1.default.underline(`to exit the metronome`));
+        metronome(bpm_number);
+    }
+    else {
+        console.log(chalk_1.default.red(bpm) + ` is not a number`);
     }
 });
 program
@@ -442,7 +462,6 @@ function newSolve(current_settings, event, session_date, option) {
                     if (count = inspection_time) {
                         listener.kill();
                         (0, timers_1.clearInterval)(intervalid);
-                        //console.log(chalk.underline(`Failure to start solve`))
                         newSolvePrompt();
                         listener.kill();
                         new_scramble = true;
