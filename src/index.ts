@@ -14,12 +14,15 @@ import { spawn } from 'child_process';
 import {settings, sessionLog, session_statistics} from "./util/interfaces"
 import * as storage from "./util/storage"
 import  * as settingsUtil from "./util/settings"
+import {playSineWave} from './util/sound'
+
 import path from 'path'
 
 const readline = require('readline');
 
 var Scrambow = require('scrambow').Scrambow;
 const cfonts = require('cfonts');
+
 
 import {string as cli_title_string} from './cli-title.json'
 
@@ -53,7 +56,7 @@ const listener = new GlobalKeyboardListener();
 //console.log(cli_title_string)
 
 program
-    .version("1.0.26")
+    .version("1.0.27")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)")
 
 
@@ -222,7 +225,8 @@ program
             const interval:number = 60000/bpm
 
             setInterval(()=>{
-                process.stdout.write(`\x07`)
+               //   ./sounds/tick.wav
+                playSineWave(440, 0.07)
             },interval)
         }
         const bpm_number:number = Number(bpm)
@@ -236,7 +240,7 @@ program
     })
 program
     .command("settings")
-    .argument("[property]","configure the cli to your liking")
+    .argument("[property]","configur e the cli to your liking")
     .action((setting_to_change:string | undefined)=>{
         let current_settings:settings = settingsUtil.loadSettings()
 
@@ -264,6 +268,7 @@ program
 
 program
     .command('show-session')
+    .description(`Shows a list of session date markers`)
     .action(()=>{
         const menu_length:number = settingsUtil.loadSettings().show_session_menu_length
         

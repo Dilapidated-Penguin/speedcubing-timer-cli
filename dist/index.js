@@ -47,6 +47,7 @@ const nodeplotlib_1 = require("nodeplotlib");
 const child_process_1 = require("child_process");
 const storage = __importStar(require("./util/storage"));
 const settingsUtil = __importStar(require("./util/settings"));
+const sound_1 = require("./util/sound");
 const path_1 = __importDefault(require("path"));
 const readline = require('readline');
 var Scrambow = require('scrambow').Scrambow;
@@ -68,7 +69,7 @@ const listener = new node_global_key_listener_1.GlobalKeyboardListener();
 //*************************************************
 //console.log(cli_title_string)
 program
-    .version("1.0.26")
+    .version("1.0.27")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)");
 program
     .command('graph')
@@ -215,7 +216,8 @@ program
     function metronome(bpm) {
         const interval = 60000 / bpm;
         setInterval(() => {
-            process.stdout.write(`\x07`);
+            //   ./sounds/tick.wav
+            (0, sound_1.playSineWave)(440, 0.07);
         }, interval);
     }
     const bpm_number = Number(bpm);
@@ -229,7 +231,7 @@ program
 });
 program
     .command("settings")
-    .argument("[property]", "configure the cli to your liking")
+    .argument("[property]", "configur e the cli to your liking")
     .action((setting_to_change) => {
     let current_settings = settingsUtil.loadSettings();
     const settings_list = Object.keys(current_settings);
@@ -254,6 +256,7 @@ program
 });
 program
     .command('show-session')
+    .description(`Shows a list of session date markers`)
     .action(() => {
     const menu_length = settingsUtil.loadSettings().show_session_menu_length;
     function newChoices(menu_page) {
