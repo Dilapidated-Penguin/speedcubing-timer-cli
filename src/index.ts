@@ -218,29 +218,33 @@ program
     })
 program
     .command('metronome')
-    .argument('[bpm]','the bpm of the metronome','60')
+    .argument('[bpm]','the bpm of the metronome',settingsUtil.loadSettings().default_bpm)
     .description('start a metronome')
     .action((bpm:string)=>{
         function metronome(bpm:number){
             const interval:number = 60000/bpm
 
             setInterval(()=>{
-               //   ./sounds/tick.wav
-                playSineWave(440, 0.07)
+                playSineWave(700, 0.07)
             },interval)
         }
         const bpm_number:number = Number(bpm)
-        if(!isNaN(bpm_number)){
-            console.log(chalk.underline(`Use `) + chalk.bold(`Ctrl + C`) + chalk.underline(`to exit the metronome`))
-            metronome(bpm_number)
-
-        }else{
+        if(isNaN(bpm_number)){
             console.log(chalk.red(bpm) + ` is not a number`)
+            return 
         }
+        if((bpm_number<3) || (bpm_number>200)){
+            console.log(`${chalk.red(bpm)}< 3bpm || ${chalk.red(bpm)}>300bpm`)
+            return
+        }
+
+        console.log(`Use ` + chalk.bold(`Ctrl + C`) + ` to exit the metronome`)
+        metronome(bpm_number)
+
     })
 program
     .command("settings")
-    .argument("[property]","configur e the cli to your liking")
+    .argument("[property]","configure the cli to your liking")
     .action((setting_to_change:string | undefined)=>{
         let current_settings:settings = settingsUtil.loadSettings()
 

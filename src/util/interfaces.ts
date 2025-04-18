@@ -34,6 +34,7 @@ export interface settings {
     scramble_length: number;
     show_session_menu_length:number;
     inspection_sec:number;
+    default_bpm:string;
 }
 
 export type event_types = 'pyraminx' | 'square1'|'megaminx' |'skewb'| number

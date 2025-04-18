@@ -16,7 +16,8 @@ function loadSettings() {
         return {
             scramble_length: 12,
             show_session_menu_length: 5,
-            inspection_sec: 15
+            inspection_sec: 15,
+            default_bpm: "60"
         };
     }
     else {
