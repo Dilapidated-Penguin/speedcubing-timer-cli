@@ -136,7 +136,7 @@ program
                               , baseline: "black"}
                             , xLabelPadding: 3
                             , xPadding: 5
-                            , label: 'Title'})
+                            , label: normalized_property})
                         let prop_data = retrieve_data(normalized_property as keyof session_statistics)
                         screen.append(line) //must append before setting data
                         line.setData([prop_data])
