@@ -23,7 +23,6 @@ const readline = require('readline');
 var Scrambow = require('scrambow').Scrambow;
 const cfonts = require('cfonts');
 
-
 import {string as cli_title_string} from './cli-title.json'
 
 const program = new Command();
@@ -56,7 +55,7 @@ const listener = new GlobalKeyboardListener();
 //console.log(cli_title_string)
 
 program
-    .version("1.0.28")
+    .version("1.0.29")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)")
 
 
@@ -102,32 +101,55 @@ program
                     .map((ISO_date)=>{
                         return new Date(ISO_date)
                     })
-                const retrieve_data = (property:propertyKey):Plot=>{
+                const retrieve_data = (property:propertyKey)=>{
                     const y_data:number[] = x_dates.map((date:Date)=>{
                         return session_data.get(date.toISOString())[property]
                     })
                 
                     return {
                         x:x_dates,
-                        y:y_data,
-                        type: 'scatter',
-                        name:property
+                        y:y_data
+                        //type: 'scatter',
+                        //name:property
                     }
                 }
                 
+                var blessed = require('blessed')
+                , contrib = require('blessed-contrib')
+                , screen = blessed.screen()
+
 
                 switch(normalized_property){
                     case 'all':
 
-                        const data:Plot[] = property_keys.map((property:propertyKey)=>{
-                            return retrieve_data(property)
-                        })
-                        plot(data)
+                        //const data:Plot[] = property_keys.map((property:propertyKey)=>{
+                        //    return retrieve_data(property)
+                        //})
+                        //plot(data)
+                        console.log(`pp`)
                     break;
                     default:
-                        plot([retrieve_data(normalized_property as keyof session_statistics)])
+                        let line = contrib.line(
+                            { style:
+                              { line: "yellow"
+                              , text: "green"
+                              , baseline: "black"}
+                            , xLabelPadding: 3
+                            , xPadding: 5
+                            , label: 'Title'})
+                        let prop_data = retrieve_data(normalized_property as keyof session_statistics)
+                        screen.append(line) //must append before setting data
+                        line.setData([prop_data])
+                    
+                        screen.key(['escape', 'q', 'C-c'], function(ch, key) {
+                            return process.exit(0);
+                        });
+                   
+                        screen.render()
+                        //plot([retrieve_data(normalized_property as keyof session_statistics)])
                     break;
                 }
+
 
             }else{
                 console.log(`error: ` +chalk.red(`Session data.size === 0`))

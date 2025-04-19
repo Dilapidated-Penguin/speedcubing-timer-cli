@@ -43,7 +43,6 @@ const events_json_1 = require("./events.json");
 const get_windows_1 = require("get-windows");
 const nice_table_1 = require("nice-table");
 const prompts_1 = require("@inquirer/prompts");
-const nodeplotlib_1 = require("nodeplotlib");
 const child_process_1 = require("child_process");
 const storage = __importStar(require("./util/storage"));
 const settingsUtil = __importStar(require("./util/settings"));
@@ -69,7 +68,7 @@ const listener = new node_global_key_listener_1.GlobalKeyboardListener();
 //*************************************************
 //console.log(cli_title_string)
 program
-    .version("1.0.27")
+    .version("1.0.29")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)");
 program
     .command('graph')
@@ -112,20 +111,35 @@ program
                 });
                 return {
                     x: x_dates,
-                    y: y_data,
-                    type: 'scatter',
-                    name: property
+                    y: y_data
+                    //type: 'scatter',
+                    //name:property
                 };
             };
+            var blessed = require('blessed'), contrib = require('blessed-contrib'), screen = blessed.screen();
             switch (normalized_property) {
                 case 'all':
-                    const data = property_keys.map((property) => {
-                        return retrieve_data(property);
-                    });
-                    (0, nodeplotlib_1.plot)(data);
+                    //const data:Plot[] = property_keys.map((property:propertyKey)=>{
+                    //    return retrieve_data(property)
+                    //})
+                    //plot(data)
+                    console.log(`pp`);
                     break;
                 default:
-                    (0, nodeplotlib_1.plot)([retrieve_data(normalized_property)]);
+                    let line = contrib.line({ style: { line: "yellow",
+                            text: "green",
+                            baseline: "black" },
+                        xLabelPadding: 3,
+                        xPadding: 5,
+                        label: 'Title' });
+                    let prop_data = retrieve_data(normalized_property);
+                    screen.append(line); //must append before setting data
+                    line.setData([prop_data]);
+                    screen.key(['escape', 'q', 'C-c'], function (ch, key) {
+                        return process.exit(0);
+                    });
+                    screen.render();
+                    //plot([retrieve_data(normalized_property as keyof session_statistics)])
                     break;
             }
         }

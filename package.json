@@ -25,6 +25,8 @@
   "dependencies": {
     "@futpib/node-global-key-listener": "^1.0.3",
     "@inquirer/prompts": "^7.3.2",
+    "blessed": "^0.1.81",
+    "blessed-contrib": "^4.11.0",
     "cfonts": "^3.3.0",
     "chalk": "^5.4.1",
     "commander": "^13.1.0",
