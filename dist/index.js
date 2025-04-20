@@ -119,19 +119,30 @@ program
             var blessed = require('blessed'), contrib = require('blessed-contrib'), screen = blessed.screen();
             switch (normalized_property) {
                 case 'all':
-                    //const data:Plot[] = property_keys.map((property:propertyKey)=>{
-                    //    return retrieve_data(property)
-                    //})
-                    //plot(data)
-                    console.log(`pp`);
-                    break;
-                default:
-                    let line = contrib.line({ style: { line: "yellow",
+                    const global_line = contrib.line({ style: { line: "yellow",
                             text: "green",
                             baseline: "black" },
                         xLabelPadding: 3,
                         xPadding: 5,
                         label: 'Title' });
+                    const global_data = property_keys.map((property) => {
+                        return retrieve_data(property);
+                    });
+                    screen.append(global_line);
+                    global_line.setData(global_data);
+                    //plot(data)
+                    screen.key(['escape', 'q', 'C-c'], function (ch, key) {
+                        return process.exit(0);
+                    });
+                    screen.render();
+                    break;
+                default:
+                    const line = contrib.line({ style: { line: "yellow",
+                            text: "green",
+                            baseline: "black" },
+                        xLabelPadding: 3,
+                        xPadding: 5,
+                        label: `${normalized_property}(s)` });
                     let prop_data = retrieve_data(normalized_property);
                     screen.append(line); //must append before setting data
                     line.setData([prop_data]);

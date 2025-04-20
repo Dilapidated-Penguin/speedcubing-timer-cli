@@ -121,22 +121,36 @@ program
 
                 switch(normalized_property){
                     case 'all':
-
-                        //const data:Plot[] = property_keys.map((property:propertyKey)=>{
-                        //    return retrieve_data(property)
-                        //})
+                        const global_line = contrib.line(
+                            { style:
+                                { line: "yellow"
+                                , text: "green"
+                                , baseline: "black"}
+                              , xLabelPadding: 3
+                              , xPadding: 5
+                              , label: 'Title'}
+                        )
+                        const global_data = property_keys.map((property:propertyKey)=>{
+                            return retrieve_data(property)
+                        })
+                        screen.append(global_line)
+                        global_line.setData(global_data)
                         //plot(data)
-                        console.log(`pp`)
+                        screen.key(['escape', 'q', 'C-c'], function(ch, key) {
+                            return process.exit(0);
+                        });
+                   
+                        screen.render()
                     break;
                     default:
-                        let line = contrib.line(
+                        const line = contrib.line(
                             { style:
                               { line: "yellow"
                               , text: "green"
                               , baseline: "black"}
                             , xLabelPadding: 3
                             , xPadding: 5
-                            , label: normalized_property})
+                            , label: `${normalized_property}(s)`})
                         let prop_data = retrieve_data(normalized_property as keyof session_statistics)
                         screen.append(line) //must append before setting data
                         line.setData([prop_data])
