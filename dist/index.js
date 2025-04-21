@@ -69,7 +69,7 @@ const listener = new node_global_key_listener_1.GlobalKeyboardListener();
 //*************************************************
 //console.log(cli_title_string)
 program
-    .version("1.0.27")
+    .version("1.0.28")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)");
 program
     .command('graph')
@@ -81,6 +81,7 @@ program
     fastest_solve \n
     slowest_solve`)
     .action((property) => {
+    console.time();
     const property_keys = ['fastest_solve', 'session_mean', 'standard_deviation', 'variance', 'slowest_solve', 'all'];
     function normalizeArg(arg) {
         const aliases = {
@@ -128,6 +129,7 @@ program
                     (0, nodeplotlib_1.plot)([retrieve_data(normalized_property)]);
                     break;
             }
+            console.timeEnd();
         }
         else {
             console.log(`error: ` + chalk_1.default.red(`Session data.size === 0`));

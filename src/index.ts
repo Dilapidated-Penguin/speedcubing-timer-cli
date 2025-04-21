@@ -54,7 +54,6 @@ const listener = new GlobalKeyboardListener();
 
 
 //console.log(cli_title_string)
-
 program
     .version("1.0.28")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)")
@@ -128,7 +127,7 @@ program
                         plot([retrieve_data(normalized_property as keyof session_statistics)])
                     break;
                 }
-
+                
             }else{
                 console.log(`error: ` +chalk.red(`Session data.size === 0`))
             }
@@ -182,7 +181,6 @@ program
         .join(`\n`)
     
         console.log(scramble)
-        
     })
 program
     .command('start')
@@ -192,6 +190,7 @@ program
     .option('-i,--inspect','add inspection time')
     .description('Begin a session of practicing a certain event')
     .action((event:string,options:any)=>{
+        
         if(event !== undefined){
             const normalized_event = event
                 .toLowerCase()
@@ -228,6 +227,7 @@ program
                 playSineWave(700, 0.07)
             },interval)
         }
+        
         const bpm_number:number = Number(bpm)
         if(isNaN(bpm_number)){
             console.log(chalk.red(bpm) + ` is not a number`)
@@ -247,7 +247,7 @@ program
     .argument("[property]","configure the cli to your liking")
     .action((setting_to_change:string | undefined)=>{
         let current_settings:settings = settingsUtil.loadSettings()
-
+        
         const settings_list:string[] = Object.keys(current_settings)
         if(setting_to_change === undefined){
             console.log(chalk.green(`Configure any of the below to some new and preferred value`)) 
