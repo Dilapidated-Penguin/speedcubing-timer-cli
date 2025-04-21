@@ -135,7 +135,7 @@ program
                         })
                         screen.append(global_line)
                         global_line.setData(global_data)
-                        //plot(data)
+
                         screen.key(['escape', 'q', 'C-c'], function(ch, key) {
                             return process.exit(0);
                         });
@@ -160,7 +160,6 @@ program
                         });
                    
                         screen.render()
-                        //plot([retrieve_data(normalized_property as keyof session_statistics)])
                     break;
                 }
 
