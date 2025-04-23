@@ -55,7 +55,7 @@ const listener = new GlobalKeyboardListener();
 
 //console.log(cli_title_string)
 program
-    .version("1.0.28")
+    .version("1.0.29")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)")
 
 
@@ -242,6 +242,7 @@ program
         metronome(bpm_number)
 
     })
+
 program
     .command("settings")
     .argument("[property]","configure the cli to your liking")
