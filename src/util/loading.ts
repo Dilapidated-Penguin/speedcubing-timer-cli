@@ -5,18 +5,15 @@ const icon_frame:string[] = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '�
 let i:number = 0;
 let interval
 
-function startLoader():string{
+export function startLoader(){
     i = 0
-    
     interval = setInterval(() => {
     process.stdout.write('\r' + icon_frame[i = ++i % icon_frame.length]);
     }, 80);
-    return 'loading'
 }
 
-function endLoader(){
+export function endLoader(){
     clearInterval(interval)
     readline.clearLine(process.stdout, 0)
     readline.cursorTo(process.stdout, 0)
-    return 'not loading'
 }

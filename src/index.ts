@@ -15,6 +15,7 @@ import {settings, sessionLog, session_statistics} from "./util/interfaces"
 import * as storage from "./util/storage"
 import  * as settingsUtil from "./util/settings"
 import {playSineWave} from './util/sound'
+import {startLoader, endLoader} from './util/loading'
 
 import path from 'path'
 
@@ -55,7 +56,7 @@ const listener = new GlobalKeyboardListener();
 
 //console.log(cli_title_string)
 program
-    .version("1.0.29")
+    .version("1.0.30")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)")
 
 
@@ -170,17 +171,26 @@ program
         }
 
         var scramble_generator = new Scrambow()
-        
-        let scramble: string = scramble_generator
-        .setType(normalized_event)
-        .setLength(scramble_length)
-        .get(Number(count))
-        .map((scramble_object,index)=>{
+        const get_scramble_string = async (count:string) => {
+            return scramble_generator
+            .setType(normalized_event)
+            .setLength(scramble_length)
+            .get(Number(count))
+            .map((scramble_object,index)=>{
             return `${index+1}) ${stylizeScramble(scramble_object.scramble_string)}`
+            })
+            .join(`\n`)
+        }
+
+        startLoader()
+        get_scramble_string(count).then((scramble_string:string)=>{
+            console.log(scramble_string)
+        }).catch((err)=>{
+            console.log(err)
+        }).finally(()=>{
+            endLoader()
         })
-        .join(`\n`)
     
-        console.log(scramble)
     })
 program
     .command('start')

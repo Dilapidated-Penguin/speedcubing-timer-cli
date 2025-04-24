@@ -1,5 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.startLoader = startLoader;
+exports.endLoader = endLoader;
 const timers_1 = require("timers");
 const readline = require('readline');
 const icon_frame = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
@@ -7,6 +9,7 @@ let i = 0;
 let interval;
 function startLoader() {
     i = 0;
+    console.log('hallo');
     interval = setInterval(() => {
         process.stdout.write('\r' + icon_frame[i = ++i % icon_frame.length]);
     }, 80);

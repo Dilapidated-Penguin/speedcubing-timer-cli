@@ -33,6 +33,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -48,6 +57,7 @@ const child_process_1 = require("child_process");
 const storage = __importStar(require("./util/storage"));
 const settingsUtil = __importStar(require("./util/settings"));
 const sound_1 = require("./util/sound");
+const loading_1 = require("./util/loading");
 const path_1 = __importDefault(require("path"));
 const readline = require('readline');
 var Scrambow = require('scrambow').Scrambow;
@@ -69,7 +79,7 @@ const listener = new node_global_key_listener_1.GlobalKeyboardListener();
 //*************************************************
 //console.log(cli_title_string)
 program
-    .version("1.0.29")
+    .version("1.0.30")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)");
 program
     .command('graph')
@@ -167,15 +177,23 @@ program
         return;
     }
     var scramble_generator = new Scrambow();
-    let scramble = scramble_generator
-        .setType(normalized_event)
-        .setLength(scramble_length)
-        .get(Number(count))
-        .map((scramble_object, index) => {
-        return `${index + 1}) ${stylizeScramble(scramble_object.scramble_string)}`;
-    })
-        .join(`\n`);
-    console.log(scramble);
+    const get_scramble_string = (count) => __awaiter(void 0, void 0, void 0, function* () {
+        return scramble_generator
+            .setType(normalized_event)
+            .setLength(scramble_length)
+            .get(Number(count))
+            .map((scramble_object, index) => {
+            return `${index + 1}) ${stylizeScramble(scramble_object.scramble_string)}`;
+        })
+            .join(`\n`);
+    });
+    (0, loading_1.startLoader)();
+    get_scramble_string(count).then((scramble_string) => {
+        (0, loading_1.endLoader)();
+        console.log(scramble_string);
+    }).catch((err) => {
+        console.log(err);
+    });
 });
 program
     .command('start')
