@@ -119,22 +119,55 @@ program
             var blessed = require('blessed'), contrib = require('blessed-contrib'), screen = blessed.screen();
             switch (normalized_property) {
                 case 'all':
-                    const global_line = contrib.line({ style: { line: "yellow",
-                            text: "green",
-                            baseline: "black" },
-                        xLabelPadding: 3,
-                        xPadding: 5,
-                        label: 'Title' });
-                    const global_data = property_keys.map((property) => {
-                        return retrieve_data(property);
+                    /*{
+                    const global_line = contrib.line(
+                        { style:
+                            { line: "yellow"
+                            , text: "green"
+                            , baseline: "black"}
+                          , xLabelPadding: 3
+                          , xPadding: 5
+                          , label: 'Title'}
+                    )
+                    const global_data = property_keys.map((property:propertyKey)=>{
+                        return retrieve_data(property)
+                    })
+                    screen.append(global_line)
+                    global_line.setData(global_data)
+                    }*/
+                    function randomColor() {
+                        return [Math.random() * 255, Math.random() * 255, Math.random() * 255];
+                    }
+                    const new_line = (prop, prev) => {
+                        return () => {
+                            if (prev !== null) {
+                                prev();
+                            }
+                            const new_line = contrib.line({ style: { line: randomColor(),
+                                    text: "green",
+                                    baseline: "black" },
+                                xLabelPadding: 3,
+                                xPadding: 5,
+                                label: prop });
+                            screen.append(new_line);
+                            new_line.setData([retrieve_data(prop)]);
+                        };
+                    };
+                    const addRender = ((display) => {
+                        return () => {
+                            display();
+                            screen.key(['escape', 'q', 'C-c'], function (ch, key) {
+                                return process.exit(0);
+                            });
+                            screen.render();
+                        };
                     });
-                    screen.append(global_line);
-                    global_line.setData(global_data);
-                    //plot(data)
-                    screen.key(['escape', 'q', 'C-c'], function (ch, key) {
-                        return process.exit(0);
+                    let final_render = null;
+                    property_keys.map((property) => {
+                        final_render = new_line(property, final_render);
                     });
-                    screen.render();
+                    final_render = addRender(final_render);
+                    final_render();
                     break;
                 default:
                     const line = contrib.line({ style: { line: "yellow",
@@ -150,7 +183,6 @@ program
                         return process.exit(0);
                     });
                     screen.render();
-                    //plot([retrieve_data(normalized_property as keyof session_statistics)])
                     break;
             }
         }
