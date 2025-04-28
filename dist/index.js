@@ -111,9 +111,7 @@ program
                 });
                 return {
                     x: x_dates,
-                    y: y_data
-                    //type: 'scatter',
-                    //name:property
+                    y: y_data,
                 };
             };
             var blessed = require('blessed'), contrib = require('blessed-contrib'), screen = blessed.screen();
@@ -138,36 +136,38 @@ program
                     function randomColor() {
                         return [Math.random() * 255, Math.random() * 255, Math.random() * 255];
                     }
-                    const new_line = (prop, prev) => {
-                        return () => {
-                            if (prev !== null) {
-                                prev();
-                            }
-                            const new_line = contrib.line({ style: { line: randomColor(),
-                                    text: "green",
-                                    baseline: "black" },
-                                xLabelPadding: 3,
-                                xPadding: 5,
-                                label: prop });
-                            screen.append(new_line);
-                            new_line.setData([retrieve_data(prop)]);
+                    const global_line = contrib.line({
+                        xLabelPadding: 3,
+                        xPadding: 5,
+                        label: 'Graph title',
+                        showLegend: true,
+                        width: '100%',
+                        height: '100%'
+                    });
+                    screen.append(global_line);
+                    let global_data = [];
+                    const new_line = (prop) => {
+                        const { x, y } = retrieve_data(prop);
+                        const random_colour = randomColor();
+                        const style = {
+                            line: random_colour,
+                            text: random_colour
                         };
+                        global_data.push({
+                            x: x,
+                            y: y,
+                            title: prop,
+                            style: style
+                        });
                     };
-                    const addRender = ((display) => {
-                        return () => {
-                            display();
-                            screen.key(['escape', 'q', 'C-c'], function (ch, key) {
-                                return process.exit(0);
-                            });
-                            screen.render();
-                        };
-                    });
-                    let final_render = null;
                     property_keys.map((property) => {
-                        final_render = new_line(property, final_render);
+                        new_line(property);
                     });
-                    final_render = addRender(final_render);
-                    final_render();
+                    global_line.setData(global_data);
+                    screen.key(['escape', 'q', 'C-c'], function (ch, key) {
+                        return process.exit(0);
+                    });
+                    screen.render();
                     break;
                 default:
                     const line = contrib.line({ style: { line: "yellow",
