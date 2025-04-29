@@ -24,7 +24,6 @@ const readline = require('readline');
 var Scrambow = require('scrambow').Scrambow;
 const cfonts = require('cfonts');
 
-
 import {string as cli_title_string} from './cli-title.json'
 
 const program = new Command();
@@ -47,6 +46,7 @@ import {GlobalKeyboardListener} from "@futpib/node-global-key-listener";
 
 import { clearInterval } from "timers";
 import { clear } from "console";
+import { randomInt } from "crypto";
 
 const listener = new GlobalKeyboardListener();
 //*************************************************
@@ -56,7 +56,10 @@ const listener = new GlobalKeyboardListener();
 
 //console.log(cli_title_string)
 program
+<<<<<<< HEAD
     .version("1.0.30")
+=======
+>>>>>>> cli-charts
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)")
 
 
@@ -102,7 +105,7 @@ program
                     .map((ISO_date)=>{
                         return new Date(ISO_date)
                     })
-                const retrieve_data = (property:propertyKey):Plot=>{
+                const retrieve_data = (property:propertyKey)=>{
                     const y_data:number[] = x_dates.map((date:Date)=>{
                         return session_data.get(date.toISOString())[property]
                     })
@@ -110,25 +113,102 @@ program
                     return {
                         x:x_dates,
                         y:y_data,
-                        type: 'scatter',
-                        name:property
                     }
                 }
                 
+                var blessed = require('blessed')
+                , contrib = require('blessed-contrib')
+                , screen = blessed.screen()
+
 
                 switch(normalized_property){
                     case 'all':
-
-                        const data:Plot[] = property_keys.map((property:propertyKey)=>{
+                        /*{
+                        const global_line = contrib.line(
+                            { style:
+                                { line: "yellow"
+                                , text: "green"
+                                , baseline: "black"}
+                              , xLabelPadding: 3
+                              , xPadding: 5
+                              , label: 'Title'}
+                        )
+                        const global_data = property_keys.map((property:propertyKey)=>{
                             return retrieve_data(property)
                         })
-                        plot(data)
+                        screen.append(global_line)
+                        global_line.setData(global_data)
+                        }*/
+                        function randomColor() {
+                            return [Math.random() * 255,Math.random()*255, Math.random()*255]
+                          }
+                        const global_line = contrib.line(
+                            { 
+                            xLabelPadding: 3,
+                            xPadding: 5,
+                            label: 'Graph title',
+                            showLegend:true,
+                            width:'100%',
+                            height:'100%'
+                        })
+                        screen.append(global_line)
+                        let global_data = []
+
+                        const new_line = (prop:string)=>{
+                            const {x,y} = retrieve_data(prop as keyof session_statistics)
+                            const random_colour = randomColor()
+                            const style = {
+                                line: random_colour,
+                                text:random_colour
+                            }
+
+                            global_data.push({
+                                x:x,
+                                y:y,
+                                title:prop,
+                                style:style
+                            })
+
+                        }
+                        
+                        property_keys.map((property:propertyKey)=>{
+                            new_line(property)
+                        })
+
+                        global_line.setData(global_data)
+
+                        screen.key(['escape', 'q', 'C-c'], function(ch, key) {
+                            return process.exit(0);
+                        });
+
+                        screen.render()
+                        
                     break;
                     default:
-                        plot([retrieve_data(normalized_property as keyof session_statistics)])
+                        const line = contrib.line(
+                            { style:
+                              { line: "yellow"
+                              , text: "green"
+                              , baseline: "black"}
+                            , xLabelPadding: 3
+                            , xPadding: 5
+                            , label: `${normalized_property}(s)`})
+                        let prop_data = retrieve_data(normalized_property as keyof session_statistics)
+                        screen.append(line) //must append before setting data
+                        line.setData([prop_data])
+                    
+                        screen.key(['escape', 'q', 'C-c'], function(ch, key) {
+                            return process.exit(0);
+                        });
+                   
+                        screen.render()
                     break;
                 }
-                
+<<<<<<< HEAD                
+=======
+
+
+>>>>>>> cli-charts
             }else{
                 console.log(`error: ` +chalk.red(`Session data.size === 0`))
             }

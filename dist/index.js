@@ -52,7 +52,6 @@ const events_json_1 = require("./events.json");
 const get_windows_1 = require("get-windows");
 const nice_table_1 = require("nice-table");
 const prompts_1 = require("@inquirer/prompts");
-const nodeplotlib_1 = require("nodeplotlib");
 const child_process_1 = require("child_process");
 const storage = __importStar(require("./util/storage"));
 const settingsUtil = __importStar(require("./util/settings"));
@@ -79,7 +78,11 @@ const listener = new node_global_key_listener_1.GlobalKeyboardListener();
 //*************************************************
 //console.log(cli_title_string)
 program
+<<<<<<< HEAD
     .version("1.0.30")
+=======
+    .version("1.0.29")
+>>>>>>> cli-charts
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)");
 program
     .command('graph')
@@ -123,19 +126,77 @@ program
                 return {
                     x: x_dates,
                     y: y_data,
-                    type: 'scatter',
-                    name: property
                 };
             };
+            var blessed = require('blessed'), contrib = require('blessed-contrib'), screen = blessed.screen();
             switch (normalized_property) {
                 case 'all':
-                    const data = property_keys.map((property) => {
-                        return retrieve_data(property);
+                    /*{
+                    const global_line = contrib.line(
+                        { style:
+                            { line: "yellow"
+                            , text: "green"
+                            , baseline: "black"}
+                          , xLabelPadding: 3
+                          , xPadding: 5
+                          , label: 'Title'}
+                    )
+                    const global_data = property_keys.map((property:propertyKey)=>{
+                        return retrieve_data(property)
+                    })
+                    screen.append(global_line)
+                    global_line.setData(global_data)
+                    }*/
+                    function randomColor() {
+                        return [Math.random() * 255, Math.random() * 255, Math.random() * 255];
+                    }
+                    const global_line = contrib.line({
+                        xLabelPadding: 3,
+                        xPadding: 5,
+                        label: 'Graph title',
+                        showLegend: true,
+                        width: '100%',
+                        height: '100%'
                     });
-                    (0, nodeplotlib_1.plot)(data);
+                    screen.append(global_line);
+                    let global_data = [];
+                    const new_line = (prop) => {
+                        const { x, y } = retrieve_data(prop);
+                        const random_colour = randomColor();
+                        const style = {
+                            line: random_colour,
+                            text: random_colour
+                        };
+                        global_data.push({
+                            x: x,
+                            y: y,
+                            title: prop,
+                            style: style
+                        });
+                    };
+                    property_keys.map((property) => {
+                        new_line(property);
+                    });
+                    global_line.setData(global_data);
+                    screen.key(['escape', 'q', 'C-c'], function (ch, key) {
+                        return process.exit(0);
+                    });
+                    screen.render();
                     break;
                 default:
-                    (0, nodeplotlib_1.plot)([retrieve_data(normalized_property)]);
+                    const line = contrib.line({ style: { line: "yellow",
+                            text: "green",
+                            baseline: "black" },
+                        xLabelPadding: 3,
+                        xPadding: 5,
+                        label: `${normalized_property}(s)` });
+                    let prop_data = retrieve_data(normalized_property);
+                    screen.append(line); //must append before setting data
+                    line.setData([prop_data]);
+                    screen.key(['escape', 'q', 'C-c'], function (ch, key) {
+                        return process.exit(0);
+                    });
+                    screen.render();
                     break;
             }
         }
