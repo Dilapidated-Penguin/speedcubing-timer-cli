@@ -56,10 +56,7 @@ const listener = new GlobalKeyboardListener();
 
 //console.log(cli_title_string)
 program
-<<<<<<< HEAD
     .version("1.0.30")
-=======
->>>>>>> cli-charts
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)")
 
 
@@ -204,11 +201,6 @@ program
                         screen.render()
                     break;
                 }
-<<<<<<< HEAD                
-=======
-
-
->>>>>>> cli-charts
             }else{
                 console.log(`error: ` +chalk.red(`Session data.size === 0`))
             }
