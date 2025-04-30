@@ -78,11 +78,7 @@ const listener = new node_global_key_listener_1.GlobalKeyboardListener();
 //*************************************************
 //console.log(cli_title_string)
 program
-<<<<<<< HEAD
     .version("1.0.30")
-=======
-    .version("1.0.29")
->>>>>>> cli-charts
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)");
 program
     .command('graph')
@@ -250,10 +246,11 @@ program
     });
     (0, loading_1.startLoader)();
     get_scramble_string(count).then((scramble_string) => {
-        (0, loading_1.endLoader)();
         console.log(scramble_string);
     }).catch((err) => {
         console.log(err);
+    }).finally(() => {
+        (0, loading_1.endLoader)();
     });
 });
 program

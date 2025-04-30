@@ -264,6 +264,7 @@ program
         })
     
     })
+
 program
     .command('start')
     .argument('[event]', 'the event you wish to practice','333')
@@ -307,6 +308,7 @@ program
 
             setInterval(()=>{
                 playSineWave(700, 0.07)
+                
             },interval)
         }
         

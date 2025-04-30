@@ -2,17 +2,17 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.playSineWave = playSineWave;
 const child_process_1 = require("child_process");
+// Use a system player (ffplay, afplay, or aplay) to play the raw PCM
+const player = (0, child_process_1.spawn)('ffplay', [
+    '-nodisp', // Disable video display window
+    '-autoexit', // Exit when done playing
+    '-f', 's16le', // Format: 16-bit signed little endian
+    '-ar', '44100', // Sample rate
+    '-ac', '1', // Number of audio channels
+    '-i', '-' // Input from stdin
+]);
 function playSineWave(frequency, duration) {
     const sineWave = generateSineWave(frequency, duration);
-    // Use a system player (ffplay, afplay, or aplay) to play the raw PCM
-    const player = (0, child_process_1.spawn)('ffplay', [
-        '-nodisp', // Disable video display window
-        '-autoexit', // Exit when done playing
-        '-f', 's16le', // Format: 16-bit signed little endian
-        '-ar', '44100', // Sample rate
-        '-ac', '1', // Number of audio channels
-        '-i', '-' // Input from stdin
-    ]);
     // Pipe the sine wave to the player
     player.stdin.write(sineWave);
     player.stdin.end();
