@@ -561,24 +561,18 @@ function newSolve(current_settings, event, session_date, option) {
         startListener(current_settings, event, session_date, option);
     }
     function startListener(current_settings, event, session_date, option) {
+        const inspect = option.i || option.inspect;
         const releasedState = () => {
             space_been_pressed = false;
-            readline.moveCursor(process.stdout, 0, -1);
+            readline.moveCursor(process.stdout, 0, -(inspect ? 1 : 2));
             readline.cursorTo(process.stdout, 0);
             readline.clearLine(process.stdout, 0);
             process.stdout.write(chalk_1.default.bgGreenBright('SOLVE') +
                 '\n \n');
             readline.cursorTo(process.stdout, 0);
-            /*
-                readline.clearLine(process.stdout, 0)
-                readline.cursorTo(process.stdout, 0)
-                process.stdout.write(`${text}\n`)
-                readline.cursorTo(process.stdout, 0)
-            */
             startTimer();
         };
-        if (option.i || option.inspect) {
-            //console.log(`space been pressed: ${space_been_pressed}`)
+        if (inspect) {
             if (space_been_pressed) {
                 releasedState();
             }
