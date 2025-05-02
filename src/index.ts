@@ -257,6 +257,7 @@ program
         startLoader()
         get_scramble_string(count).then((scramble_string:string)=>{
             console.log(scramble_string)
+
         }).catch((err)=>{
             console.log(err)
         }).finally(()=>{
@@ -537,7 +538,7 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
         `\n`)
 
         console.log(chalk.bold.magentaBright(`Whenever ready use the spacebar to start a new solve using`) + chalk.italic.yellow(` n`)+
-        `\n \n`)                                
+        `\n \n`)
     }
     function inspection_time(inspection_time:number = 15){
 

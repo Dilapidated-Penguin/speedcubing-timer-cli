@@ -1,5 +1,5 @@
 {
-    "events_list": ["333","333bf","333fm","222","444","555","666","777","sq1","minx","clock"],
+    "events_list": ["333","333bf","333fm","222","444","555","666","777","sq1","minx","clock","wv","zz","zzll","zzlsll","tsle","edges","ll"],
     "event_choices":[
         {"name":"3x3", "value": "333"},
         {"name":"3x3 blindfold","value":"333bf"},
@@ -11,6 +11,14 @@
         {"name":"7x7","value":"777"},
         {"name":"Square 1","value":"sq1"},
         {"name":"Megaminx","value":"minx"},
-        {"name":"Clock","value":"clock"}
+        {"name":"Clock","value":"clock"},
+        {"name":"winter variation","value":"wv"},
+        {"name":"ZZ Method","value":"zz"},
+        {"name":"zzll","value":"zzll"},
+        {"name":"zzlsll","value":"zzlsll"},
+        {"name":"Three-Slot Last Edge","value":"tsle"},
+        {"name":"Edges","value":"edges"},
+        {"name":"Last layer","value":"ll"}
+
     ]
 }
