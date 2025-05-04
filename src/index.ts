@@ -11,7 +11,7 @@ import { select,number, input} from '@inquirer/prompts';
 import { plot, Plot } from 'nodeplotlib'
 import { spawn } from 'child_process';
 
-import {settings, sessionLog, session_statistics} from "./util/interfaces"
+import {settings, sessionLog, session_statistics, SolveInstance} from "./util/interfaces"
 import * as storage from "./util/storage"
 import  * as settingsUtil from "./util/settings"
 import {playSineWave} from './util/sound'
@@ -120,22 +120,7 @@ program
 
                 switch(normalized_property){
                     case 'all':
-                        /*{
-                        const global_line = contrib.line(
-                            { style:
-                                { line: "yellow"
-                                , text: "green"
-                                , baseline: "black"}
-                              , xLabelPadding: 3
-                              , xPadding: 5
-                              , label: 'Title'}
-                        )
-                        const global_data = property_keys.map((property:propertyKey)=>{
-                            return retrieve_data(property)
-                        })
-                        screen.append(global_line)
-                        global_line.setData(global_data)
-                        }*/
+
                         function randomColor() {
                             return [Math.random() * 255,Math.random()*255, Math.random()*255]
                           }
@@ -640,24 +625,59 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
             }
         }
         listener.addListener(function (e, down) {
-            
+            const edit_selected = (date_ISO:string)=>{
+                number({
+                    message:`Enter the index of the solve you'd like to change`,
+                    default:1
+                }).then((index_to_delete:number)=>{
+                    const selected_entry:SolveInstance = saved_data.data.get(date_ISO).entries.at(index_to_delete)
+                    console.log(Object.keys(selected_entry).map((key)=>{
+                        return `${key}: ${chalk.green(selected_entry[key])}`
+                    })
+                    .join(''))
+                    select({
+                        message:`Label or delete`,
+                        choices:['label','delete']
+                    }).then((answer:string)=>{
+                        switch(answer){
+                            case 'label':
+                                //WIP
+                            break;
+                            case 'delete':
+                                deleteEntry(date_ISO,index_to_delete)
+                            break;
+                        }
+                    }).catch((err)=>{
+                        console.log(err)
+                    })
+                }).catch((err)=>{
+                    console.log(err)
+                })
+            }
+            const deleteEntry =  (date_ISO:string,index_to_delete:number = null)=>{
+                let current_session:sessionLog = saved_data.data.get(date_ISO)
+                if(current_session.entries.length>=1){
+                    if(index_to_delete === null){
+                        current_session.entries.pop()
+                        console.log(chalk.blue(`Last solve deleted`))
+                    }else{
+                        current_session.entries = current_session.entries.filter((d,index)=> index !==index_to_delete)
+                        console.log(`Session ${index_to_delete} deleted`)
+                    }
+
+                    saved_data.data.set(date_ISO,current_session)
+                    storage.saveData(saved_data)
+                }else{
+                    console.log(chalk.red(`There exist no entries in the current session to delete`))
+                }
+            }
             if(activeWindowSync()?.id !== main_window_id){
                 return
             }
     
             if((e.name === "D") && (e.state === "UP") && (!new_scramble)){
-                const deleteEntry =  (date_ISO:string)=>{
-                    const current_session:sessionLog = saved_data.data.get(date_ISO)
-                    if(current_session.entries.length>=1){
-                        current_session.entries.pop()
-                        console.log(chalk.blue(`Last solve deleted`))
-                        
-                        saved_data.data.set(date_ISO,current_session)
-                        storage.saveData(saved_data)
-                    }else{
-                        console.log(chalk.red(`There exist no entries in the current session to delete`))
-                    }
-                }
+
+
                 deleteEntry(session_date_ISO)
                 return 
             }
@@ -862,4 +882,3 @@ function stylizeScramble(scramble: string): string {
         })
         .join('');
 }
-
