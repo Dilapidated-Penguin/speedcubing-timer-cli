@@ -13,7 +13,8 @@ export function loadSettings():settings {
             scramble_length: 12,
             show_session_menu_length: 5,
             inspection_sec: 15,
-            default_bpm: "60"
+            default_bpm: "60",
+            default_metronome:'tick'
         }
     }else{
         return JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf-8'));

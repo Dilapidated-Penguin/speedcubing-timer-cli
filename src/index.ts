@@ -304,12 +304,13 @@ program
     .argument('[bpm]','the bpm of the metronome',settingsUtil.loadSettings().default_bpm)
     .description('start a metronome')
     .action((bpm:string)=>{
+        const directory:string = path.join(__dirname,`sound/${settingsUtil.loadSettings().default_metronome}.wav`)
+
         function metronome(bpm:number){
             const interval:number = 60000/bpm
-
             setInterval(()=>{
-                playSineWave(700, 0.07)
-                
+                playSineWave(directory)
+
             },interval)
         }
         

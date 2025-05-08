@@ -78,7 +78,7 @@ const listener = new node_global_key_listener_1.GlobalKeyboardListener();
 //*************************************************
 //console.log(cli_title_string)
 program
-    .version("1.0.30")
+    .version("1.0.31")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)");
 program
     .command('graph')
@@ -289,10 +289,11 @@ program
     .argument('[bpm]', 'the bpm of the metronome', settingsUtil.loadSettings().default_bpm)
     .description('start a metronome')
     .action((bpm) => {
+    const directory = path_1.default.join(__dirname, `sound/${settingsUtil.loadSettings().default_metronome}.wav`);
     function metronome(bpm) {
         const interval = 60000 / bpm;
         setInterval(() => {
-            (0, sound_1.playSineWave)(700, 0.07);
+            (0, sound_1.playSineWave)(directory);
         }, interval);
     }
     const bpm_number = Number(bpm);
