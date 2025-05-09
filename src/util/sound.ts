@@ -1,37 +1,28 @@
-import { spawn } from 'child_process';
+// You can either use spawn or exec, the choice is often purely aesthetic,
+// but spawn() doesn't spawn a shell, which is what we want here.
+import { spawn } from "node:child_process";
 
-  // Use a system player (ffplay, afplay, or aplay) to play the raw PCM
-  const player = spawn('ffplay', [
-    '-nodisp',     // Disable video display window
-    '-autoexit',   // Exit when done playing
-    '-f', 's16le', // Format: 16-bit signed little endian
-    '-ar', '44100',// Sample rate
-    '-ac', '1',    // Number of audio channels
-    '-i', '-'      // Input from stdin
-  ]);
-  
-export function playSineWave(frequency: number, duration: number): void {
-    const sineWave = generateSineWave(frequency, duration);
-    
-    // Pipe the sine wave to the player
-    player.stdin.write(sineWave);
-    player.stdin.end();
-  
-    // Listen for the player process closing
-  }
+// On Windows we can offload the work to PowerShell:
+const winFn = (filePath) => spawn(`powershell`, [
+  `-c`,
+  `(`,
+  `New-Object`,
+  `Media.SoundPlayer`,
+  `"${filePath}"`,
+  `).PlaySync();`
+]);
 
-function generateSineWave(frequency: number, duration: number, sampleRate: number = 44100): Buffer {
-    const samples: number[] = [];
-    const numSamples = Math.floor(duration * sampleRate);
-  
-    // Generate the sine wave samples
-    for (let i = 0; i < numSamples; i++) {
-      const time = i / sampleRate;
-      const sample = Math.sin(2 * Math.PI * frequency * time);
-      // Scale to 16-bit signed PCM range
-      samples.push(Math.floor(sample * 32767)); // PCM 16-bit range [-32767, 32767]
-    }
-  
-    // Convert to a Buffer using Int16Array
-    return Buffer.from(new Int16Array(samples).buffer);
-}
+// On MacOS, we have afplay available:
+const macFn = (filePath) => spawn(`afplay`, [filePath]);
+
+// And on everything else, i.e. linux/unix, we can use aplay:
+const nxFn = (filePath) => spawn(`aplay`, [filePath]);
+
+// Then, because your OS doesn't change during a script
+// run, we can simply bind the single function we'll need
+// as "play(filePath)":
+const { platform: os } = process;
+const playAudioFile = (os === `win32`) ? winFn : (os === `darwin`) ? macFn : nxFn;
+
+// And then we can just export that for use anywhere in our codebase.
+export { playAudioFile }

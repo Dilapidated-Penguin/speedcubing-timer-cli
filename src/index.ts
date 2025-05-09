@@ -1,5 +1,5 @@
 #! /usr/bin/env node
-import chalk from "chalk";
+import chalk, { chalkStderr } from "chalk";
 import { Command } from "commander";
 
 import {event_choices,events_list} from './events.json'
@@ -14,7 +14,7 @@ import { spawn } from 'child_process';
 import {settings, sessionLog, session_statistics, SolveInstance} from "./util/interfaces"
 import * as storage from "./util/storage"
 import  * as settingsUtil from "./util/settings"
-import {playSineWave} from './util/sound'
+import {playAudioFile} from './util/sound'
 import {startLoader, endLoader} from './util/loading'
 
 import path from 'path'
@@ -289,12 +289,13 @@ program
     .argument('[bpm]','the bpm of the metronome',settingsUtil.loadSettings().default_bpm)
     .description('start a metronome')
     .action((bpm:string)=>{
+
         function metronome(bpm:number){
             const interval:number = 60000/bpm
+            const file_path = path.join(__dirname,`/sounds/${settingsUtil.loadSettings().default_metronome}`)
 
             setInterval(()=>{
-                playSineWave(700, 0.07)
-                
+                playAudioFile(file_path)
             },interval)
         }
         
@@ -303,11 +304,11 @@ program
             console.log(chalk.red(bpm) + ` is not a number`)
             return 
         }
-        if((bpm_number<3) || (bpm_number>200)){
-            console.log(`${chalk.red(bpm)}< 3bpm || ${chalk.red(bpm)}>300bpm`)
+        if((bpm_number<3) || (bpm_number>180)){
+            console.log(`${chalk.red(bpm)}< 3bpm || ${chalk.red(bpm)}>180bpm`)
             return
         }
-
+        console.log(`bpm: ` + chalk.bold(bpm))
         console.log(`Use ` + chalk.bold(`Ctrl + C`) + ` to exit the metronome`)
         metronome(bpm_number)
 
@@ -424,22 +425,43 @@ program
 program.parse(process.argv)
 
 function updateSetting(current_settings:settings,property:string):void{
-    let prompt
-    switch(typeof current_settings[property]){
-        case 'number': prompt = number
-        case 'string': prompt = input
+    switch(property){
+        case 'default_metronome':
+            const fs = require('node:fs');
+            const sounds_path = path.join(__dirname,`./sounds`)
+            let sound_names:string[] = fs.readdirSync(sounds_path)
+            const current_sound_index = sound_names.findIndex(u => u === current_settings.default_metronome)
+            sound_names[current_sound_index] = chalk.bold(sound_names[current_sound_index])
+            select({
+                message:`Select the sound of the metronome`,
+                choices:sound_names
+            }).then((sound_name:string)=>{
+                current_settings.default_metronome = sound_name
+                settingsUtil.saveSettings(current_settings)
+                console.log(chalk.green(`Metronome sound setting updated`))
+            }).catch((err)=>{
+                console.log(err)
+            })
+            break;
+        default:
+            let prompt
+            switch(typeof current_settings[property]){
+                case 'number': prompt = number
+                case 'string': prompt = input
+            }
+        
+            prompt({
+                message: `Enter new value for ${property}`,
+                default: `${current_settings[property]}` as never
+            }).then((new_value:number|string)=>{
+                current_settings[property] = new_value
+                settingsUtil.saveSettings(current_settings)
+        
+                console.log(chalk.green('settings updated!'))
+                console.table(current_settings)
+            })
+            break;
     }
-
-    prompt({
-        message: `Enter new value for ${property}`,
-        default: `${current_settings[property]}` as never
-    }).then((new_value:number|string)=>{
-        current_settings[property] = new_value
-        settingsUtil.saveSettings(current_settings)
-
-        console.log(chalk.green('settings updated!'))
-        console.table(current_settings)
-    })
 }
 
 function validEvent(event_to_check:string):boolean{

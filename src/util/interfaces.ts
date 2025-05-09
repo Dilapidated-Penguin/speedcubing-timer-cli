@@ -35,6 +35,7 @@ export interface settings {
     show_session_menu_length:number;
     inspection_sec:number;
     default_bpm:string;
+    default_metronome:string;
 }
 
 export type event_types = 'pyraminx' | 'square1'|'megaminx' |'skewb'| number

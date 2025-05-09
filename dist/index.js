@@ -78,7 +78,7 @@ const listener = new node_global_key_listener_1.GlobalKeyboardListener();
 //*************************************************
 //console.log(cli_title_string)
 program
-    .version("1.0.30")
+    .version("1.0.31")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)");
 program
     .command('graph')
@@ -291,8 +291,9 @@ program
     .action((bpm) => {
     function metronome(bpm) {
         const interval = 60000 / bpm;
+        const file_path = path_1.default.join(__dirname, `/sounds/${settingsUtil.loadSettings().default_metronome}`);
         setInterval(() => {
-            (0, sound_1.playSineWave)(700, 0.07);
+            (0, sound_1.playAudioFile)(file_path);
         }, interval);
     }
     const bpm_number = Number(bpm);
@@ -300,10 +301,11 @@ program
         console.log(chalk_1.default.red(bpm) + ` is not a number`);
         return;
     }
-    if ((bpm_number < 3) || (bpm_number > 200)) {
-        console.log(`${chalk_1.default.red(bpm)}< 3bpm || ${chalk_1.default.red(bpm)}>300bpm`);
+    if ((bpm_number < 3) || (bpm_number > 180)) {
+        console.log(`${chalk_1.default.red(bpm)}< 3bpm || ${chalk_1.default.red(bpm)}>180bpm`);
         return;
     }
+    console.log(`bpm: ` + chalk_1.default.bold(bpm));
     console.log(`Use ` + chalk_1.default.bold(`Ctrl + C`) + ` to exit the metronome`);
     metronome(bpm_number);
 });
@@ -403,20 +405,41 @@ program
 });
 program.parse(process.argv);
 function updateSetting(current_settings, property) {
-    let prompt;
-    switch (typeof current_settings[property]) {
-        case 'number': prompt = prompts_1.number;
-        case 'string': prompt = prompts_1.input;
+    switch (property) {
+        case 'default_metronome':
+            const fs = require('node:fs');
+            const sounds_path = path_1.default.join(__dirname, `./sounds`);
+            let sound_names = fs.readdirSync(sounds_path);
+            const current_sound_index = sound_names.findIndex(u => u === current_settings.default_metronome);
+            sound_names[current_sound_index] = chalk_1.default.bold(sound_names[current_sound_index]);
+            (0, prompts_1.select)({
+                message: `Select the sound of the metronome`,
+                choices: sound_names
+            }).then((sound_name) => {
+                current_settings.default_metronome = sound_name;
+                settingsUtil.saveSettings(current_settings);
+                console.log(chalk_1.default.green(`Metronome sound setting updated`));
+            }).catch((err) => {
+                console.log(err);
+            });
+            break;
+        default:
+            let prompt;
+            switch (typeof current_settings[property]) {
+                case 'number': prompt = prompts_1.number;
+                case 'string': prompt = prompts_1.input;
+            }
+            prompt({
+                message: `Enter new value for ${property}`,
+                default: `${current_settings[property]}`
+            }).then((new_value) => {
+                current_settings[property] = new_value;
+                settingsUtil.saveSettings(current_settings);
+                console.log(chalk_1.default.green('settings updated!'));
+                console.table(current_settings);
+            });
+            break;
     }
-    prompt({
-        message: `Enter new value for ${property}`,
-        default: `${current_settings[property]}`
-    }).then((new_value) => {
-        current_settings[property] = new_value;
-        settingsUtil.saveSettings(current_settings);
-        console.log(chalk_1.default.green('settings updated!'));
-        console.table(current_settings);
-    });
 }
 function validEvent(event_to_check) {
     return (events_json_1.events_list.indexOf(event_to_check) !== -1);

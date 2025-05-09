@@ -2,5 +2,6 @@
   "scramble_length": "15",
   "show_session_menu_length": 7,
   "inspection_sec": 15,
-  "default_bpm": "65"
+  "default_bpm": "65",
+  "default_metronome": "tick_high_sharp"
 }
