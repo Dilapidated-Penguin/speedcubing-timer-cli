@@ -18,7 +18,7 @@ function loadSettings() {
             show_session_menu_length: 5,
             inspection_sec: 15,
             default_bpm: "60",
-            default_metronome: 'tick'
+            default_metronome: 'tick.wav'
         };
     }
     else {
