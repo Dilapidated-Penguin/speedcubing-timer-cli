@@ -32,7 +32,6 @@ export interface global_statistics {
 }
 export interface settings {
     scramble_length: number;
-    show_session_menu_length:number;
     inspection_sec:number;
     default_bpm:string;
     default_metronome:string;

@@ -61,6 +61,7 @@ const path_1 = __importDefault(require("path"));
 const readline = require('readline');
 var Scrambow = require('scrambow').Scrambow;
 const cfonts = require('cfonts');
+const cli_title_json_1 = require("./cli-title.json");
 const program = new commander_1.Command();
 var saved_data = storage.loadData();
 //main_window_id
@@ -76,9 +77,9 @@ const timers_1 = require("timers");
 const listener = new node_global_key_listener_1.GlobalKeyboardListener();
 //*************************************************
 //*************************************************
-//console.log(cli_title_string)
+console.log(cli_title_json_1.string);
 program
-    .version("1.0.31")
+    .version("1.0.32")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)");
 program
     .command('graph')
@@ -127,22 +128,6 @@ program
             var blessed = require('blessed'), contrib = require('blessed-contrib'), screen = blessed.screen();
             switch (normalized_property) {
                 case 'all':
-                    /*{
-                    const global_line = contrib.line(
-                        { style:
-                            { line: "yellow"
-                            , text: "green"
-                            , baseline: "black"}
-                          , xLabelPadding: 3
-                          , xPadding: 5
-                          , label: 'Title'}
-                    )
-                    const global_data = property_keys.map((property:propertyKey)=>{
-                        return retrieve_data(property)
-                    })
-                    screen.append(global_line)
-                    global_line.setData(global_data)
-                    }*/
                     function randomColor() {
                         return [Math.random() * 255, Math.random() * 255, Math.random() * 255];
                     }
@@ -338,7 +323,7 @@ program
     .command('show-session')
     .description(`Shows a list of session date markers`)
     .action(() => {
-    const menu_length = settingsUtil.loadSettings().show_session_menu_length;
+    const menu_length = 5;
     function newChoices(menu_page) {
         const session_array = Array.from(storage.loadData().data.values());
         let menu_choices = session_array
@@ -602,22 +587,83 @@ function newSolve(current_settings, event, session_date, option) {
         }
         listener.addListener(function (e, down) {
             var _a;
+            const edit_selected = (date_ISO) => {
+                (0, prompts_1.number)({
+                    message: `Enter the index of the solve you'd like to change`,
+                    default: 1
+                }).then((index_to_alter) => {
+                    const selected_entry = saved_data.data.get(date_ISO).entries.at(index_to_alter);
+                    console.log(Object.keys(selected_entry).map((key) => {
+                        return `${key}: ${chalk_1.default.green(selected_entry[key])}`;
+                    })
+                        .join(''));
+                    (0, prompts_1.select)({
+                        message: `Label or delete`,
+                        choices: ['label', 'delete']
+                    }).then((answer) => {
+                        switch (answer) {
+                            case 'label':
+                                editEntry(date_ISO, index_to_alter);
+                                break;
+                            case 'delete':
+                                deleteEntry(date_ISO, index_to_alter);
+                                break;
+                        }
+                    }).catch((err) => {
+                        console.log(err);
+                    });
+                }).catch((err) => {
+                    console.log(err);
+                });
+            };
+            const deleteEntry = (date_ISO, index_to_delete = null) => {
+                let current_session = saved_data.data.get(date_ISO);
+                if (current_session.entries.length >= 1) {
+                    if (index_to_delete === null) {
+                        current_session.entries.pop();
+                        console.log(chalk_1.default.blue(`Last solve deleted`));
+                    }
+                    else {
+                        current_session.entries = current_session.entries.filter((d, index) => index !== index_to_delete);
+                        console.log(`Session ${index_to_delete} deleted`);
+                    }
+                    saved_data.data.set(date_ISO, current_session);
+                    storage.saveData(saved_data);
+                }
+                else {
+                    console.log(chalk_1.default.red(`There exist no entries in the current session to delete`));
+                }
+            };
+            const editEntry = (date_ISO, index_to_edit = null) => {
+                const current_session = saved_data.data.get(date_ISO);
+                if (current_session.entries.length >= 1) {
+                    (0, prompts_1.select)({
+                        message: `Select the label for the previous solve`,
+                        choices: [
+                            '+3',
+                            'DNF',
+                            'OK'
+                        ]
+                    }).then((answer) => {
+                        const index = (index_to_edit === null) ? -1 : index_to_edit + 1;
+                        current_session.entries.at(index).label = answer;
+                        saved_data.data.set(date_ISO, current_session);
+                        storage.saveData(saved_data);
+                        console.log(chalk_1.default.green(`Last solve labelled ${answer}`));
+                        console.log(chalk_1.default.bold.magentaBright(`Whenever ready use the spacebar to start a new solve`));
+                    }).catch((err) => {
+                        console.log(chalk_1.default.red(`An error has occurred:${err}`));
+                    });
+                }
+                else {
+                    console.log(chalk_1.default.redBright(`There exist no entries in the current session to label`));
+                }
+                //console.log(`\n \n`)
+            };
             if (((_a = (0, get_windows_1.activeWindowSync)()) === null || _a === void 0 ? void 0 : _a.id) !== main_window_id) {
                 return;
             }
             if ((e.name === "D") && (e.state === "UP") && (!new_scramble)) {
-                const deleteEntry = (date_ISO) => {
-                    const current_session = saved_data.data.get(date_ISO);
-                    if (current_session.entries.length >= 1) {
-                        current_session.entries.pop();
-                        console.log(chalk_1.default.blue(`Last solve deleted`));
-                        saved_data.data.set(date_ISO, current_session);
-                        storage.saveData(saved_data);
-                    }
-                    else {
-                        console.log(chalk_1.default.red(`There exist no entries in the current session to delete`));
-                    }
-                };
                 deleteEntry(session_date_ISO);
                 return;
             }
@@ -635,30 +681,8 @@ function newSolve(current_settings, event, session_date, option) {
             if ((e.name === "E") && (e.state === "UP") && (!new_scramble)) {
                 if (!solve_labelled) {
                     solve_labelled = true;
-                    const current_session = saved_data.data.get(session_date_ISO);
                     console.log(`\n \n`);
-                    if (current_session.entries.length >= 1) {
-                        (0, prompts_1.select)({
-                            message: `Select the label for the previous solve`,
-                            choices: [
-                                '+3',
-                                'DNF',
-                                'OK'
-                            ]
-                        }).then((answer) => {
-                            current_session.entries.at(-1).label = answer;
-                            saved_data.data.set(session_date_ISO, current_session);
-                            storage.saveData(saved_data);
-                            console.log(chalk_1.default.green(`Last solve labelled ${answer}`));
-                            console.log(chalk_1.default.bold.magentaBright(`Whenever ready use the spacebar to start a new solve`));
-                        }).catch((err) => {
-                            console.log(chalk_1.default.red(`An error has occurred:${err}`));
-                        });
-                    }
-                    else {
-                        console.log(chalk_1.default.redBright(`There exist no entries in the current session to label`));
-                    }
-                    console.log(`\n \n`);
+                    editEntry(session_date_ISO);
                 }
                 else {
                     console.log(chalk_1.default.redBright(`The solve has already been labelled.`));
@@ -762,13 +786,15 @@ function newSolve(current_settings, event, session_date, option) {
                                 };
                             }), ['time', 'label']));
                             //stats
-                            const titles = ['average', 'std. dev.', 'variance', 'fastest', 'slowest'];
-                            const stats_string = Object.keys(current_stats)
-                                .map((stat_name, index) => {
-                                return `${titles[index]}: ${chalk_1.default.bold(current_stats[stat_name].toFixed(3))}`;
-                            })
-                                .join(chalk_1.default.blue(` | `));
-                            console.log(stats_string + `\n`);
+                            const generateStatString = (current_stats) => {
+                                const titles = ['average', 'std. dev.', 'variance', 'fastest', 'slowest'];
+                                return Object.keys(current_stats)
+                                    .map((stat_name, index) => {
+                                    return `${titles[index]}: ${chalk_1.default.bold(current_stats[stat_name].toFixed(3))}`;
+                                })
+                                    .join(chalk_1.default.blue(` | `));
+                            };
+                            console.log(generateStatString(current_stats) + `\n`);
                         }
                         newSolvePrompt();
                         //reset

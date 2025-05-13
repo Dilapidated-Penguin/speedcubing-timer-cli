@@ -7,9 +7,7 @@ import {event_choices,events_list} from './events.json'
 import {activeWindowSync, Result} from 'get-windows';
 import { createTable } from 'nice-table';
 
-import { select,number, input} from '@inquirer/prompts';
-import { plot, Plot } from 'nodeplotlib'
-import { spawn } from 'child_process';
+import { select,number, input} from '@inquirer/prompts';import { spawn } from 'child_process';
 
 import {settings, sessionLog, session_statistics, SolveInstance} from "./util/interfaces"
 import * as storage from "./util/storage"
@@ -54,9 +52,9 @@ const listener = new GlobalKeyboardListener();
 //*************************************************
 
 
-//console.log(cli_title_string)
+console.log(cli_title_string)
 program
-    .version("1.0.31")
+    .version("1.0.32")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)")
 
 
@@ -346,8 +344,7 @@ program
     .command('show-session')
     .description(`Shows a list of session date markers`)
     .action(()=>{
-        const menu_length:number = settingsUtil.loadSettings().show_session_menu_length
-        
+        const menu_length:number = 5
 
         function newChoices(menu_page:number){
             const session_array:sessionLog[] = Array.from(storage.loadData().data.values())
@@ -651,8 +648,8 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                 number({
                     message:`Enter the index of the solve you'd like to change`,
                     default:1
-                }).then((index_to_delete:number)=>{
-                    const selected_entry:SolveInstance = saved_data.data.get(date_ISO).entries.at(index_to_delete)
+                }).then((index_to_alter:number)=>{
+                    const selected_entry:SolveInstance = saved_data.data.get(date_ISO).entries.at(index_to_alter)
                     console.log(Object.keys(selected_entry).map((key)=>{
                         return `${key}: ${chalk.green(selected_entry[key])}`
                     })
@@ -663,10 +660,10 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                     }).then((answer:string)=>{
                         switch(answer){
                             case 'label':
-                                //WIP
+                                editEntry(date_ISO,index_to_alter)
                             break;
                             case 'delete':
-                                deleteEntry(date_ISO,index_to_delete)
+                                deleteEntry(date_ISO,index_to_alter)
                             break;
                         }
                     }).catch((err)=>{
@@ -693,13 +690,39 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                     console.log(chalk.red(`There exist no entries in the current session to delete`))
                 }
             }
+            const editEntry = (date_ISO:string,index_to_edit:number = null)=>{
+                const current_session:sessionLog = saved_data.data.get(date_ISO)
+                if(current_session.entries.length>=1){    
+                    select({
+                        message:`Select the label for the previous solve`,
+                        choices:[
+                            '+3',
+                            'DNF',
+                            'OK'
+                        ]
+                    }).then((answer:string)=>{
+                        const index:number = (index_to_edit === null) ? -1 : index_to_edit+1
+                        current_session.entries.at(index).label = answer
+
+                        saved_data.data.set(date_ISO,current_session)
+                        storage.saveData(saved_data)
+
+                        console.log(chalk.green(`Last solve labelled ${answer}`))
+                        console.log(chalk.bold.magentaBright(`Whenever ready use the spacebar to start a new solve`))
+
+                    }).catch((err)=>{
+                        console.log(chalk.red(`An error has occurred:${err}`))
+                    })
+                }else{
+                    console.log(chalk.redBright(`There exist no entries in the current session to label`))
+                }
+                //console.log(`\n \n`)
+            }
             if(activeWindowSync()?.id !== main_window_id){
                 return
             }
     
             if((e.name === "D") && (e.state === "UP") && (!new_scramble)){
-
-
                 deleteEntry(session_date_ISO)
                 return 
             }
@@ -718,32 +741,8 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
             if((e.name === "E") && (e.state === "UP") && (!new_scramble)){
                 if(!solve_labelled){
                     solve_labelled = true
-                    const current_session:sessionLog = saved_data.data.get(session_date_ISO)
                     console.log(`\n \n`)
-                    if(current_session.entries.length>=1){    
-                        select({
-                            message:`Select the label for the previous solve`,
-                            choices:[
-                                '+3',
-                                'DNF',
-                                'OK'
-                            ]
-                        }).then((answer:string)=>{
-                            current_session.entries.at(-1).label = answer
-
-                            saved_data.data.set(session_date_ISO,current_session)
-                            storage.saveData(saved_data)
-    
-                            console.log(chalk.green(`Last solve labelled ${answer}`))
-                            console.log(chalk.bold.magentaBright(`Whenever ready use the spacebar to start a new solve`))
-    
-                        }).catch((err)=>{
-                            console.log(chalk.red(`An error has occurred:${err}`))
-                        })
-                    }else{
-                        console.log(chalk.redBright(`There exist no entries in the current session to label`))
-                    }
-                    console.log(`\n \n`)
+                    editEntry(session_date_ISO)
                 }else{
                     console.log(chalk.redBright(`The solve has already been labelled.`))
                 }
@@ -851,13 +850,16 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                                 }
                             }),['time','label']))
                             //stats
-                            const titles:string[] = ['average','std. dev.','variance','fastest','slowest']
-                            const stats_string:string = Object.keys(current_stats)
-                                .map((stat_name:string,index:number)=>{
-                                    return `${titles[index]}: ${chalk.bold(current_stats[stat_name].toFixed(3))}`
-                                })
-                                .join(chalk.blue(` | `))
-                            console.log(stats_string + `\n`)
+                            const generateStatString = (current_stats:session_statistics)=>{
+                                const titles:string[] = ['average','std. dev.','variance','fastest','slowest']
+                                return Object.keys(current_stats)
+                                    .map((stat_name:string,index:number)=>{
+                                        return `${titles[index]}: ${chalk.bold(current_stats[stat_name].toFixed(3))}`
+                                    })
+                                    .join(chalk.blue(` | `))
+                            }
+
+                            console.log(generateStatString(current_stats) + `\n`)
                             
                         }
                         newSolvePrompt()
