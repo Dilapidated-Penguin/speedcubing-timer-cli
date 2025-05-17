@@ -364,7 +364,7 @@ program
                         const label = (instance.label === "DNF") ? chalk_1.default.red(instance.label) : instance.label;
                         return {
                             n: index + 1,
-                            time: instance.time.toFixed(3),
+                            time: instance.time.toFixed(settingsUtil.loadSettings().sig_fig),
                             label: label !== null && label !== void 0 ? label : chalk_1.default.green('OK'),
                         };
                     });
@@ -373,7 +373,7 @@ program
                     const current_session_stats = storage.loadStats().session_data.get(value);
                     if (current_session_stats !== undefined) {
                         console.log(Object.keys(current_session_stats).map((key_name) => {
-                            return `${key_name}: ${current_session_stats[key_name].toFixed(3)} ${chalk_1.default.green('s')}`;
+                            return `${key_name}: ${current_session_stats[key_name].toFixed(settingsUtil.loadSettings().sig_fig)} ${chalk_1.default.green('s')}`;
                         })
                             .join(chalk_1.default.blue('\n')));
                     }
@@ -410,6 +410,7 @@ function updateSetting(current_settings, property) {
             break;
         default:
             let prompt;
+            console.log(typeof current_settings[property]);
             switch (typeof current_settings[property]) {
                 case 'number': prompt = prompts_1.number;
                 case 'string': prompt = prompts_1.input;
@@ -771,7 +772,7 @@ function newSolve(current_settings, event, session_date, option) {
                             letterSpacing: 1, // define letter spacing
                         });
                         process.stdout.write("\b \b");
-                        console.log(chalk_1.default.bold(`Time: `) + elapsedTime.toFixed(4) + chalk_1.default.green('s') +
+                        console.log(chalk_1.default.bold(`Time: `) + elapsedTime.toFixed(settingsUtil.loadSettings().sig_fig) + chalk_1.default.green('s') +
                             `\n`);
                         console.log(chalk_1.default.bold(`Ao5: `) + chalk_1.default.magenta(current_Ao5 !== null && current_Ao5 !== void 0 ? current_Ao5 : "--") + chalk_1.default.green(`s`));
                         console.log(chalk_1.default.bold(`Ao12: `) + chalk_1.default.magenta(current_Ao12 !== null && current_Ao12 !== void 0 ? current_Ao12 : "--") + chalk_1.default.green(`s`) +
@@ -781,7 +782,7 @@ function newSolve(current_settings, event, session_date, option) {
                             console.table((0, nice_table_1.createTable)(current_session.entries.map((instance) => {
                                 var _a;
                                 return {
-                                    time: instance.time.toFixed(3),
+                                    time: instance.time.toFixed(settingsUtil.loadSettings().sig_fig),
                                     label: (_a = instance.label) !== null && _a !== void 0 ? _a : 'OK'
                                 };
                             }), ['time', 'label']));
@@ -790,7 +791,7 @@ function newSolve(current_settings, event, session_date, option) {
                                 const titles = ['average', 'std. dev.', 'variance', 'fastest', 'slowest'];
                                 return Object.keys(current_stats)
                                     .map((stat_name, index) => {
-                                    return `${titles[index]}: ${chalk_1.default.bold(current_stats[stat_name].toFixed(3))}`;
+                                    return `${titles[index]}: ${chalk_1.default.bold(current_stats[stat_name].toFixed(settingsUtil.loadSettings().sig_fig))}`;
                                 })
                                     .join(chalk_1.default.blue(` | `));
                             };

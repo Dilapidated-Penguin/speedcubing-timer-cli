@@ -17,7 +17,8 @@ function loadSettings() {
             scramble_length: 12,
             inspection_sec: 15,
             default_bpm: "60",
-            default_metronome: 'tick.wav'
+            default_metronome: 'tick.wav',
+            sig_fig: 3
         };
     }
     else {

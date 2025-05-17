@@ -391,7 +391,7 @@ program
                             const label = (instance.label ===  "DNF") ? chalk.red(instance.label) : instance.label
                             return {
                                 n: index+1,
-                                time: instance.time.toFixed(3),
+                                time: instance.time.toFixed(settingsUtil.loadSettings().sig_fig),
                                 label: label ?? chalk.green('OK'),
                             }
                         })
@@ -402,7 +402,7 @@ program
 
                         if(current_session_stats !== undefined){
                             console.log(Object.keys(current_session_stats).map((key_name:string)=>{
-                                return `${key_name}: ${current_session_stats[key_name].toFixed(3)} ${chalk.green('s')}`
+                                return `${key_name}: ${current_session_stats[key_name].toFixed(settingsUtil.loadSettings().sig_fig)} ${chalk.green('s')}`
                             })
                             .join(chalk.blue('\n')))
                         }else{
@@ -442,6 +442,7 @@ function updateSetting(current_settings:settings,property:string):void{
             break;
         default:
             let prompt
+            console.log(typeof current_settings[property])
             switch(typeof current_settings[property]){
                 case 'number': prompt = number
                 case 'string': prompt = input
@@ -834,7 +835,7 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                             letterSpacing: 1,           // define letter spacing
                         });
                         process.stdout.write("\b \b")
-                        console.log( chalk.bold(`Time: `) +  elapsedTime.toFixed(4) + chalk.green('s') +
+                        console.log( chalk.bold(`Time: `) +  elapsedTime.toFixed(settingsUtil.loadSettings().sig_fig) + chalk.green('s') +
                         `\n`);
                         
                         console.log(chalk.bold(`Ao5: `)+ chalk.magenta(current_Ao5 ?? "--") + chalk.green(`s`))
@@ -845,7 +846,7 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                             //solves
                             console.table(createTable(current_session.entries.map((instance)=>{
                                 return {
-                                    time: instance.time.toFixed(3),
+                                    time: instance.time.toFixed(settingsUtil.loadSettings().sig_fig),
                                     label: instance.label ?? 'OK'
                                 }
                             }),['time','label']))
@@ -854,7 +855,7 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                                 const titles:string[] = ['average','std. dev.','variance','fastest','slowest']
                                 return Object.keys(current_stats)
                                     .map((stat_name:string,index:number)=>{
-                                        return `${titles[index]}: ${chalk.bold(current_stats[stat_name].toFixed(3))}`
+                                        return `${titles[index]}: ${chalk.bold(current_stats[stat_name].toFixed(settingsUtil.loadSettings().sig_fig))}`
                                     })
                                     .join(chalk.blue(` | `))
                             }

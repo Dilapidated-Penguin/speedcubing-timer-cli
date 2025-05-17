@@ -35,6 +35,7 @@ export interface settings {
     inspection_sec:number;
     default_bpm:string;
     default_metronome:string;
+    sig_fig:number;
 }
 
 export type event_types = 'pyraminx' | 'square1'|'megaminx' |'skewb'| number
