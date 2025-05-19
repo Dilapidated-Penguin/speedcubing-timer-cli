@@ -451,7 +451,11 @@ function updateSetting(current_settings:settings,property:string):void{
             prompt({
                 message: `Enter new value for ${property}`,
                 default: `${current_settings[property]}` as never
-            }).then((new_value:number|string)=>{
+            }).then((new_value:string|number)=>{
+                if(isNaN((Number(new_value)))){
+                    new_value = Number(new_value)
+                }
+                
                 current_settings[property] = new_value
                 settingsUtil.saveSettings(current_settings)
         
