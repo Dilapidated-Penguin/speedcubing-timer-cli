@@ -17,6 +17,7 @@ export function loadSettings():settings {
             sig_fig:3
         }
     }else{
-        return JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf-8'));
+        const output: settings = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf-8'))
+        return output
     }
 }

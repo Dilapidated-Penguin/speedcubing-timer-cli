@@ -22,7 +22,8 @@ function loadSettings() {
         };
     }
     else {
-        return JSON.parse(fs_1.default.readFileSync(SETTINGS_FILE, 'utf-8'));
+        const output = JSON.parse(fs_1.default.readFileSync(SETTINGS_FILE, 'utf-8'));
+        return output;
     }
 }
 //# sourceMappingURL=settings.js.map

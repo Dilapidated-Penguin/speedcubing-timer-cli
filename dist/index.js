@@ -419,7 +419,13 @@ function updateSetting(current_settings, property) {
                 message: `Enter new value for ${property}`,
                 default: `${current_settings[property]}`
             }).then((new_value) => {
-                current_settings[property] = new_value;
+                const num_value = Number(new_value);
+                if (!isNaN(num_value)) {
+                    current_settings[property] = num_value;
+                }
+                else {
+                    current_settings[property] = new_value;
+                }
                 settingsUtil.saveSettings(current_settings);
                 console.log(chalk_1.default.green('settings updated!'));
                 console.table(current_settings);
@@ -638,15 +644,17 @@ function newSolve(current_settings, event, session_date, option) {
             const editEntry = (date_ISO, index_to_edit = null) => {
                 const current_session = saved_data.data.get(date_ISO);
                 if (current_session.entries.length >= 1) {
+                    const editing_last_solve = index_to_edit === null;
+                    const entry_message = editing_last_solve ? `Select the label for the previous solve` : `Select the label for solve #${index_to_edit}`;
                     (0, prompts_1.select)({
-                        message: `Select the label for the previous solve`,
+                        message: entry_message,
                         choices: [
                             '+3',
                             'DNF',
                             'OK'
                         ]
                     }).then((answer) => {
-                        const index = (index_to_edit === null) ? -1 : index_to_edit + 1;
+                        const index = editing_last_solve ? -1 : index_to_edit + 1;
                         current_session.entries.at(index).label = answer;
                         saved_data.data.set(date_ISO, current_session);
                         storage.saveData(saved_data);

@@ -426,9 +426,11 @@ function updateSetting(current_settings:settings,property:string):void{
         case 'default_metronome':
             const fs = require('node:fs');
             const sounds_path = path.join(__dirname,`./sounds`)
+
             let sound_names:string[] = fs.readdirSync(sounds_path)
             const current_sound_index = sound_names.findIndex(u => u === current_settings.default_metronome)
             sound_names[current_sound_index] = chalk.bold(sound_names[current_sound_index])
+
             select({
                 message:`Select the sound of the metronome`,
                 choices:sound_names
@@ -452,11 +454,14 @@ function updateSetting(current_settings:settings,property:string):void{
                 message: `Enter new value for ${property}`,
                 default: `${current_settings[property]}` as never
             }).then((new_value:string|number)=>{
-                if(isNaN((Number(new_value)))){
-                    new_value = Number(new_value)
+                const num_value:number  = Number(new_value)
+                if(!isNaN(num_value)){
+                    current_settings[property] = num_value
+                }else{
+                    current_settings[property] = new_value
                 }
                 
-                current_settings[property] = new_value
+                
                 settingsUtil.saveSettings(current_settings)
         
                 console.log(chalk.green('settings updated!'))
@@ -697,16 +702,18 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
             }
             const editEntry = (date_ISO:string,index_to_edit:number = null)=>{
                 const current_session:sessionLog = saved_data.data.get(date_ISO)
-                if(current_session.entries.length>=1){    
+                if(current_session.entries.length>=1){   
+                    const editing_last_solve:boolean = index_to_edit === null
+                    const entry_message:string = editing_last_solve ? `Select the label for the previous solve` : `Select the label for solve #${index_to_edit}`
                     select({
-                        message:`Select the label for the previous solve`,
+                        message:entry_message,
                         choices:[
                             '+3',
                             'DNF',
                             'OK'
                         ]
                     }).then((answer:string)=>{
-                        const index:number = (index_to_edit === null) ? -1 : index_to_edit+1
+                        const index:number = editing_last_solve ? -1 : index_to_edit+1
                         current_session.entries.at(index).label = answer
 
                         saved_data.data.set(date_ISO,current_session)
