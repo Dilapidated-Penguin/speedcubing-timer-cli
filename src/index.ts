@@ -602,12 +602,16 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                 {colour = chalk.bold.red}
     
                 //udpate the timer
-                readline.cursorTo(process.stdout, 0)
-                readline.moveCursor(process.stdout, 0, -lines_after_counter- 1);
-                readline.clearLine(process.stdout, 0);
-                process.stdout.write(`${colour(`${inspection_time-count}`)}`);
-                readline.moveCursor(process.stdout, 0, lines_after_counter+ 1);
-                readline.cursorTo(process.stdout, 0)
+                const updateTimer = (time:number, lines_after_counter:number)=>{
+                    readline.cursorTo(process.stdout, 0)
+                    readline.moveCursor(process.stdout, 0, -lines_after_counter- 1);
+                    readline.clearLine(process.stdout, 0);
+                    process.stdout.write(`${colour(`${time-count}`)}`);
+                    readline.moveCursor(process.stdout, 0, lines_after_counter+ 1);
+                    readline.cursorTo(process.stdout, 0)
+                }
+                updateTimer(inspection_time,lines_after_counter)
+
         
                 if(count >= inspection_time){
                     if(count = inspection_time){
@@ -620,6 +624,7 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                         new_scramble = true
                         solve_labelled = false
                         space_been_pressed = false
+
                         newSolve(current_settings,event,session_date,option)
                     }
                 }
