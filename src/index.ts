@@ -664,7 +664,10 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                     message:`Enter the index of the solve you'd like to change`,
                     default:1
                 }).then((index_to_alter:number)=>{
-                    const selected_entry:SolveInstance = saved_data.data.get(date_ISO).entries.at(index_to_alter)
+
+                    const selected_entry:SolveInstance = saved_data.data.get(date_ISO).entries.at(index_to_alter+1)
+                    
+                    
                     console.log(Object.keys(selected_entry).map((key)=>{
                         return `${key}: ${chalk.green(selected_entry[key])}`
                     })
@@ -733,7 +736,6 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                 }else{
                     console.log(chalk.redBright(`There exist no entries in the current session to label`))
                 }
-                //console.log(`\n \n`)
             }
             if(activeWindowSync()?.id !== main_window_id){
                 return
