@@ -548,12 +548,15 @@ function newSolve(current_settings, event, session_date, option) {
                     colour = chalk_1.default.bold.red;
                 }
                 //udpate the timer
-                readline.cursorTo(process.stdout, 0);
-                readline.moveCursor(process.stdout, 0, -lines_after_counter - 1);
-                readline.clearLine(process.stdout, 0);
-                process.stdout.write(`${colour(`${inspection_time - count}`)}`);
-                readline.moveCursor(process.stdout, 0, lines_after_counter + 1);
-                readline.cursorTo(process.stdout, 0);
+                const updateTimer = (time, lines_after_counter) => {
+                    readline.cursorTo(process.stdout, 0);
+                    readline.moveCursor(process.stdout, 0, -lines_after_counter - 1);
+                    readline.clearLine(process.stdout, 0);
+                    process.stdout.write(`${colour(`${time - count}`)}`);
+                    readline.moveCursor(process.stdout, 0, lines_after_counter + 1);
+                    readline.cursorTo(process.stdout, 0);
+                };
+                updateTimer(inspection_time, lines_after_counter);
                 if (count >= inspection_time) {
                     if (count = inspection_time) {
                         listener.kill();
@@ -599,7 +602,12 @@ function newSolve(current_settings, event, session_date, option) {
                     message: `Enter the index of the solve you'd like to change`,
                     default: 1
                 }).then((index_to_alter) => {
-                    const selected_entry = saved_data.data.get(date_ISO).entries.at(index_to_alter);
+                    const current_session = saved_data.data.get(date_ISO).entries;
+                    if ((index_to_alter < 0) || (index_to_alter > current_session.length)) {
+                        console.log(chalk_1.default.red('invalid index'));
+                        return;
+                    }
+                    const selected_entry = current_session.at(index_to_alter);
                     console.log(Object.keys(selected_entry).map((key) => {
                         return `${key}: ${chalk_1.default.green(selected_entry[key])}`;
                     })
@@ -667,7 +675,6 @@ function newSolve(current_settings, event, session_date, option) {
                 else {
                     console.log(chalk_1.default.redBright(`There exist no entries in the current session to label`));
                 }
-                //console.log(`\n \n`)
             };
             if (((_a = (0, get_windows_1.activeWindowSync)()) === null || _a === void 0 ? void 0 : _a.id) !== main_window_id) {
                 return;
@@ -829,21 +836,99 @@ function startTimer() {
     startTime = process.hrtime();
     timer_running = true;
 }
-function stylizeScramble(scramble) {
+function stylizeScramble(scramble, r = 240, g = 5, b = 1) {
+    function rgb_to_hsl(r, g, b) {
+        r /= 255;
+        g /= 255;
+        b /= 255;
+        const max = Math.max(r, g, b), min = Math.min(r, g, b);
+        let h = 0, s = 0, l = (max + min) / 2;
+        if (max !== min) {
+            const d = max - min;
+            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+            switch (max) {
+                case r:
+                    h = (g - b) / d + (g < b ? 6 : 0);
+                    break;
+                case g:
+                    h = (b - r) / d + 2;
+                    break;
+                case b:
+                    h = (r - g) / d + 4;
+                    break;
+            }
+            h *= 60;
+        }
+        return [Math.round(h), +(s * 100).toFixed(1), +(l * 100).toFixed(1)];
+    }
+    const generate_hsl_palette = (h, s, l) => {
+        const res = {
+            complementary: [(h + 180) % 360, s, l],
+            third_hue: [(h - 90) % 360, s, l],
+            fourth_hue: [(h + 270) % 360, s, l],
+            tint: [h, s * 0.8, Math.min(l * 1.2, 100)]
+        };
+        return res;
+    };
+    function hsl_to_rgb(h, s, l) {
+        s /= 100;
+        l /= 100;
+        const c = (1 - Math.abs(2 * l - 1)) * s;
+        const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+        const m = l - c / 2;
+        let r = 0, g = 0, b = 0;
+        if (0 <= h && h < 60) {
+            r = c;
+            g = x;
+            b = 0;
+        }
+        else if (60 <= h && h < 120) {
+            r = x;
+            g = c;
+            b = 0;
+        }
+        else if (120 <= h && h < 180) {
+            r = 0;
+            g = c;
+            b = x;
+        }
+        else if (180 <= h && h < 240) {
+            r = 0;
+            g = x;
+            b = c;
+        }
+        else if (240 <= h && h < 300) {
+            r = x;
+            g = 0;
+            b = c;
+        }
+        else if (300 <= h && h < 360) {
+            r = c;
+            g = 0;
+            b = x;
+        }
+        return [
+            Math.round((r + m) * 255),
+            Math.round((g + m) * 255),
+            Math.round((b + m) * 255)
+        ];
+    }
+    const [h, s, l] = rgb_to_hsl(r, g, b);
+    const { complementary, third_hue, fourth_hue, tint } = generate_hsl_palette(h, s, l);
     const colorMap = {
-        'r': chalk_1.default.redBright,
-        'l': chalk_1.default.blueBright,
-        'u': chalk_1.default.blueBright,
-        'd': chalk_1.default.greenBright,
+        'F': chalk_1.default.rgb(r, g, b).underline,
+        'R': chalk_1.default.rgb(...hsl_to_rgb(...complementary)),
+        'L': chalk_1.default.rgb(...hsl_to_rgb(...complementary)),
+        'U': chalk_1.default.rgb(...hsl_to_rgb(...third_hue)),
+        'D': chalk_1.default.rgb(...hsl_to_rgb(...fourth_hue)),
         "'": chalk_1.default.whiteBright,
-        '2': chalk_1.default.blue,
-        'F': chalk_1.default.cyan.underline,
+        '2': chalk_1.default.rgb(...hsl_to_rgb(...tint)),
     };
     return scramble
         .trim()
         .split('')
         .map(char => {
-        const stylize = colorMap[char] || chalk_1.default.cyan;
+        const stylize = colorMap[char] || chalk_1.default.rgb(r, g, b);
         return stylize(char);
     })
         .join('');

@@ -45,6 +45,7 @@ import {GlobalKeyboardListener} from "@futpib/node-global-key-listener";
 import { clearInterval } from "timers";
 import { clear } from "console";
 import { randomInt } from "crypto";
+import { type } from "os";
 
 const listener = new GlobalKeyboardListener();
 //*************************************************
@@ -664,8 +665,12 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                     message:`Enter the index of the solve you'd like to change`,
                     default:1
                 }).then((index_to_alter:number)=>{
-
-                    const selected_entry:SolveInstance = saved_data.data.get(date_ISO).entries.at(index_to_alter+1)
+                    const current_session:SolveInstance[] = saved_data.data.get(date_ISO).entries
+                    if((index_to_alter < 0) || (index_to_alter>current_session.length)){
+                        console.log(chalk.red('invalid index'))
+                        return
+                    }
+                    const selected_entry:SolveInstance = current_session.at(index_to_alter)
                     
                     
                     console.log(Object.keys(selected_entry).map((key)=>{
@@ -905,22 +910,89 @@ function startTimer():void{
     startTime = process.hrtime()
     timer_running = true
 }
-function stylizeScramble(scramble: string): string {
+function stylizeScramble(scramble: string,r:number = 240,g:number = 5,b:number = 1): string {
+    function rgb_to_hsl(r: number, g: number, b: number): [number, number, number] {
+        r /= 255;
+        g /= 255;
+        b /= 255;
+      
+        const max = Math.max(r, g, b),
+              min = Math.min(r, g, b);
+        let h = 0, s = 0, l = (max + min) / 2;
+      
+        if (max !== min) {
+          const d = max - min;
+          s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      
+          switch (max) {
+            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+            case g: h = (b - r) / d + 2; break;
+            case b: h = (r - g) / d + 4; break;
+          }
+      
+          h *= 60;
+        }
+      
+        return [Math.round(h), +(s * 100).toFixed(1), +(l * 100).toFixed(1)];
+      }
+      
+    const generate_hsl_palette = (h:number,s:number,l:number)=>{
+        //generates 5 colour pallete
+        interface palette {
+            complementary:[number,number,number],
+            third_hue:[number,number,number],
+            fourth_hue:[number,number,number],
+            tint:[number,number,number]
+        }
+        const res:palette = {
+            complementary: [(h+180) %360,s,l],
+            third_hue:[(h-90)%360,s,l],
+            fourth_hue:[(h+270)%360,s,l],
+            tint:[h,s*0.8,Math.min(l*1.2,100)]
+        }
+        return res
+    }
+    function hsl_to_rgb(h: number, s: number, l: number): [number, number, number] {
+        s /= 100;
+        l /= 100;
+      
+        const c = (1 - Math.abs(2 * l - 1)) * s;
+        const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+        const m = l - c / 2;
+      
+        let r = 0, g = 0, b = 0;
+      
+        if (0 <= h && h < 60) { r = c; g = x; b = 0; }
+        else if (60 <= h && h < 120) { r = x; g = c; b = 0; }
+        else if (120 <= h && h < 180) { r = 0; g = c; b = x; }
+        else if (180 <= h && h < 240) { r = 0; g = x; b = c; }
+        else if (240 <= h && h < 300) { r = x; g = 0; b = c; }
+        else if (300 <= h && h < 360) { r = c; g = 0; b = x; }
+      
+        return [
+          Math.round((r + m) * 255),
+          Math.round((g + m) * 255),
+          Math.round((b + m) * 255)
+        ];
+      }
+    const [h,s,l] = rgb_to_hsl(r,g,b)
+    const {complementary,third_hue,fourth_hue,tint} = generate_hsl_palette(h,s,l)
+    
     const colorMap: Record<string, (s: string) => string> = {
-        'r': chalk.redBright,
-        'l': chalk.blueBright,
-        'u': chalk.blueBright,
-        'd': chalk.greenBright,
+        'F': chalk.rgb(r,g,b).underline,
+        'R': chalk.rgb(...hsl_to_rgb(...complementary)),
+        'L': chalk.rgb(...hsl_to_rgb(...complementary)),
+        'U': chalk.rgb(...hsl_to_rgb(...third_hue)),
+        'D': chalk.rgb(...hsl_to_rgb(...fourth_hue)),
         "'": chalk.whiteBright,
-        '2': chalk.blue,
-        'F': chalk.cyan.underline,
+        '2': chalk.rgb(...hsl_to_rgb(...tint)),
     };
 
     return scramble
         .trim()
         .split('')
         .map(char => {
-            const stylize = colorMap[char] || chalk.cyan;
+            const stylize = colorMap[char] || chalk.rgb(r,g,b);
             return stylize(char);
         })
         .join('');
