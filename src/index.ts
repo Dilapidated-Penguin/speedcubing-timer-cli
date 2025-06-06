@@ -55,7 +55,7 @@ const listener = new GlobalKeyboardListener();
 
 console.log(cli_title_string)
 program
-    .version("1.0.32")
+    .version("1.0.36")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)")
 
 
@@ -593,14 +593,15 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
         function startInspectionTimer(){
             intervalid = global.setInterval(()=>{
                 count++
-        
-                let colour = null
-                if(count <= 5)
-                {colour = chalk.bold.green}
-                else if( count<=10 )
-                {colour = chalk.bold.yellow}
-                else
-                {colour = chalk.bold.red}
+                const colour_gradient:number =  1-((inspection_time-count)/inspection_time)
+
+                const red = (gradient)=>{
+                    return Math.round(255*gradient)
+                }
+                const green = (gradient)=>{
+                    return Math.round(-255*(gradient) + 255)
+                }
+                let colour = chalk.rgb(red(colour_gradient),green(colour_gradient),0)
     
                 //udpate the timer
                 const updateTimer = (time:number, lines_after_counter:number)=>{
@@ -613,7 +614,7 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                 }
                 updateTimer(inspection_time,lines_after_counter)
 
-        
+
                 if(count >= inspection_time){
                     if(count = inspection_time){
                         listener.kill()
@@ -910,7 +911,7 @@ function startTimer():void{
     startTime = process.hrtime()
     timer_running = true
 }
-function stylizeScramble(scramble: string,r:number = 240,g:number = 5,b:number = 1): string {
+function stylizeScramble(scramble: string,r:number = 133,g:number = 18,b:number = 0): string {
     function rgb_to_hsl(r: number, g: number, b: number): [number, number, number] {
         r /= 255;
         g /= 255;
@@ -944,13 +945,13 @@ function stylizeScramble(scramble: string,r:number = 240,g:number = 5,b:number =
             fourth_hue:[number,number,number],
             tint:[number,number,number]
         }
-        const res:palette = {
+        const tetratic:palette = {
             complementary: [(h+180) %360,s,l],
             third_hue:[(h-90)%360,s,l],
             fourth_hue:[(h+270)%360,s,l],
             tint:[h,s*0.8,Math.min(l*1.2,100)]
         }
-        return res
+        return tetratic
     }
     function hsl_to_rgb(h: number, s: number, l: number): [number, number, number] {
         s /= 100;

@@ -79,7 +79,7 @@ const listener = new node_global_key_listener_1.GlobalKeyboardListener();
 //*************************************************
 console.log(cli_title_json_1.string);
 program
-    .version("1.0.32")
+    .version("1.0.36")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)");
 program
     .command('graph')
@@ -537,16 +537,14 @@ function newSolve(current_settings, event, session_date, option) {
         function startInspectionTimer() {
             intervalid = global.setInterval(() => {
                 count++;
-                let colour = null;
-                if (count <= 5) {
-                    colour = chalk_1.default.bold.green;
-                }
-                else if (count <= 10) {
-                    colour = chalk_1.default.bold.yellow;
-                }
-                else {
-                    colour = chalk_1.default.bold.red;
-                }
+                const colour_gradient = 1 - ((inspection_time - count) / inspection_time);
+                const red = (gradient) => {
+                    return Math.round(255 * gradient);
+                };
+                const green = (gradient) => {
+                    return Math.round(-255 * (gradient) + 255);
+                };
+                let colour = chalk_1.default.rgb(red(colour_gradient), green(colour_gradient), 0);
                 //udpate the timer
                 const updateTimer = (time, lines_after_counter) => {
                     readline.cursorTo(process.stdout, 0);
@@ -836,7 +834,7 @@ function startTimer() {
     startTime = process.hrtime();
     timer_running = true;
 }
-function stylizeScramble(scramble, r = 240, g = 5, b = 1) {
+function stylizeScramble(scramble, r = 133, g = 18, b = 0) {
     function rgb_to_hsl(r, g, b) {
         r /= 255;
         g /= 255;
@@ -862,13 +860,13 @@ function stylizeScramble(scramble, r = 240, g = 5, b = 1) {
         return [Math.round(h), +(s * 100).toFixed(1), +(l * 100).toFixed(1)];
     }
     const generate_hsl_palette = (h, s, l) => {
-        const res = {
+        const tetratic = {
             complementary: [(h + 180) % 360, s, l],
             third_hue: [(h - 90) % 360, s, l],
             fourth_hue: [(h + 270) % 360, s, l],
             tint: [h, s * 0.8, Math.min(l * 1.2, 100)]
         };
-        return res;
+        return tetratic;
     };
     function hsl_to_rgb(h, s, l) {
         s /= 100;
