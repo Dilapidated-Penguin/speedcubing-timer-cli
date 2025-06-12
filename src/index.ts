@@ -989,12 +989,13 @@ function stylizeScramble(scramble: string,r:number = 133,g:number = 18,b:number 
         '2': chalk.rgb(...hsl_to_rgb(...tint)),
     };
 
-    return scramble
+    const res = scramble
         .trim()
         .split('')
         .map(char => {
             const stylize = colorMap[char] || chalk.rgb(r,g,b);
             return stylize(char);
         })
-        .join('');
+    console.log(res)
+    return res.join('');
 }
