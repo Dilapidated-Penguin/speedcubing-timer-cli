@@ -866,6 +866,12 @@ function stylizeScramble(scramble, r = 133, g = 18, b = 0) {
             fourth_hue: [(h + 270) % 360, s, l],
             tint: [h, s * 0.8, Math.min(l * 1.2, 100)]
         };
+        const analogous = {
+            complementary: [(h + 30) % 360, s, l],
+            third_hue: [(h - 30) % 360, s, l],
+            fourth_hue: [(h + 60) % 360, s, l],
+            tint: [(h - 60) % 360, s, l]
+        };
         return tetratic;
     };
     function hsl_to_rgb(h, s, l) {
@@ -912,23 +918,25 @@ function stylizeScramble(scramble, r = 133, g = 18, b = 0) {
         ];
     }
     const [h, s, l] = rgb_to_hsl(r, g, b);
-    const { complementary, third_hue, fourth_hue, tint } = generate_hsl_palette(h, s, l);
+    const { complementary, fourth_hue, tint } = generate_hsl_palette(h, s, l);
     const colorMap = {
         'F': chalk_1.default.rgb(r, g, b).underline,
         'R': chalk_1.default.rgb(...hsl_to_rgb(...complementary)),
         'L': chalk_1.default.rgb(...hsl_to_rgb(...complementary)),
-        'U': chalk_1.default.rgb(...hsl_to_rgb(...third_hue)),
+        'U': chalk_1.default.rgb(...hsl_to_rgb(...fourth_hue)),
         'D': chalk_1.default.rgb(...hsl_to_rgb(...fourth_hue)),
         "'": chalk_1.default.whiteBright,
+        " ": chalk_1.default.whiteBright,
         '2': chalk_1.default.rgb(...hsl_to_rgb(...tint)),
     };
-    return scramble
+    const res = scramble
         .trim()
         .split('')
         .map(char => {
         const stylize = colorMap[char] || chalk_1.default.rgb(r, g, b);
         return stylize(char);
-    })
+    });
+    return res
         .join('');
 }
 //# sourceMappingURL=index.js.map

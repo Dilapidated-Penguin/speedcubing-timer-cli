@@ -234,6 +234,7 @@ program
             .get(Number(count))
             .map((scramble_object,index)=>{
             return `${index+1}) ${stylizeScramble(scramble_object.scramble_string)}`
+
             })
             .join(`\n`)
         }
@@ -524,6 +525,7 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
         .setLength(current_settings.scramble_length)
         .get(1)[0]
         .scramble_string
+        
 
     process.stdout.write(`\x1b[2K\r`)
     console.log(chalk.bold.red(`Scramble:`))
@@ -951,6 +953,13 @@ function stylizeScramble(scramble: string,r:number = 133,g:number = 18,b:number 
             fourth_hue:[(h+270)%360,s,l],
             tint:[h,s*0.8,Math.min(l*1.2,100)]
         }
+
+        const analogous:palette = {
+            complementary: [(h+30) %360,s,l],
+            third_hue:[(h-30)%360,s,l],
+            fourth_hue:[(h+60)%360,s,l],
+            tint:[(h-60)%360,s,l]
+        }
         return tetratic
     }
     function hsl_to_rgb(h: number, s: number, l: number): [number, number, number] {
@@ -977,15 +986,16 @@ function stylizeScramble(scramble: string,r:number = 133,g:number = 18,b:number 
         ];
       }
     const [h,s,l] = rgb_to_hsl(r,g,b)
-    const {complementary,third_hue,fourth_hue,tint} = generate_hsl_palette(h,s,l)
+    const {complementary,fourth_hue,tint} = generate_hsl_palette(h,s,l)
     
     const colorMap: Record<string, (s: string) => string> = {
         'F': chalk.rgb(r,g,b).underline,
         'R': chalk.rgb(...hsl_to_rgb(...complementary)),
         'L': chalk.rgb(...hsl_to_rgb(...complementary)),
-        'U': chalk.rgb(...hsl_to_rgb(...third_hue)),
+        'U': chalk.rgb(...hsl_to_rgb(...fourth_hue)),
         'D': chalk.rgb(...hsl_to_rgb(...fourth_hue)),
         "'": chalk.whiteBright,
+        " ":chalk.whiteBright,
         '2': chalk.rgb(...hsl_to_rgb(...tint)),
     };
 
@@ -994,8 +1004,9 @@ function stylizeScramble(scramble: string,r:number = 133,g:number = 18,b:number 
         .split('')
         .map(char => {
             const stylize = colorMap[char] || chalk.rgb(r,g,b);
-            return stylize(char);
+            return stylize(char)
         })
-    console.log(res)
-    return res.join('');
+
+    return res
+        .join('')
 }
