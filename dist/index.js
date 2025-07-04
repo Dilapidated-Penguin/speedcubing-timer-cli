@@ -79,7 +79,7 @@ const listener = new node_global_key_listener_1.GlobalKeyboardListener();
 //*************************************************
 console.log(cli_title_json_1.string);
 program
-    .version("1.0.36")
+    .version("1.0.38")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)");
 program
     .command('graph')
@@ -370,12 +370,14 @@ program
                     });
                     console.log(`\n`);
                     console.log((0, nice_table_1.createTable)(info_table, ['n', 'time', 'label']));
-                    const current_session_stats = storage.loadStats().session_data.get(value);
-                    if (current_session_stats !== undefined) {
-                        console.log(Object.keys(current_session_stats).map((key_name) => {
-                            return `${key_name}: ${current_session_stats[key_name].toFixed(settingsUtil.loadSettings().sig_fig)} ${chalk_1.default.green('s')}`;
-                        })
-                            .join(chalk_1.default.blue('\n')));
+                    console.log('value' + value);
+                    if (current_session_data !== undefined) {
+                        console.log(`${chalk_1.default.green(current_session_data.date_formatted)}\n Event:${current_session_data.event} \n`);
+                        const current_sesssion_stats = storage.loadStats().session_data.get(value);
+                        console.log(current_sesssion_stats);
+                        console.log(Object.keys(current_sesssion_stats).map((stat_name) => {
+                            return `${chalk_1.default.yellowBright(stat_name)}: ${current_sesssion_stats[stat_name]}${chalk_1.default.green('s')} \n`;
+                        }));
                     }
                     else {
                         console.log(`Statistics unavailable`);
