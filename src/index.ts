@@ -399,15 +399,15 @@ program
                         })
                         console.log(`\n`)
                         console.log(createTable(info_table,['n','time','label']))
-                        console.log('value' +value)
-                        
-                        if(current_session_data !== undefined){
+
+                        const current_sesssion_stats:session_statistics = storage.loadStats().session_data.get(value)
+
+                        if(current_sesssion_stats !== undefined){
                             console.log(`${chalk.green(current_session_data.date_formatted)}\n Event:${current_session_data.event} \n`)
-                            const current_sesssion_stats:session_statistics = storage.loadStats().session_data.get(value)
-                            console.log(current_sesssion_stats)
+
                             console.log(Object.keys(current_sesssion_stats).map((stat_name:string)=>{
                                 return `${chalk.yellowBright(stat_name)}: ${current_sesssion_stats[stat_name]}${chalk.green('s')} \n`
-                            }))
+                            }).join(''))
 
                         }else{
                             console.log(`Statistics unavailable`)
