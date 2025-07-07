@@ -409,23 +409,25 @@ function updateSetting(current_settings, property) {
             });
             break;
         default:
-            let prompt;
-            console.log(typeof current_settings[property]);
-            switch (typeof current_settings[property]) {
-                case 'number': prompt = prompts_1.number;
-                case 'string': prompt = prompts_1.input;
-            }
+            let prompt = prompts_1.number;
+            /*
+            console.log(typeof current_settings[property])
+            switch(typeof current_settings[property]){
+                case 'number': prompt = number
+                case 'string': prompt = input
+            }*/
             prompt({
                 message: `Enter new value for ${property}`,
-                default: `${current_settings[property]}`
+                default: current_settings[property]
             }).then((new_value) => {
                 const num_value = Number(new_value);
                 if (!isNaN(num_value)) {
                     current_settings[property] = num_value;
                 }
                 else {
-                    current_settings[property] = new_value;
+                    current_settings[property] = `${new_value}`;
                 }
+                console.log(current_settings);
                 settingsUtil.saveSettings(current_settings);
                 console.log(chalk_1.default.green('settings updated!'));
                 console.table(current_settings);

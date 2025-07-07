@@ -447,25 +447,24 @@ function updateSetting(current_settings:settings,property:string):void{
             })
             break;
         default:
-            let prompt
+            let prompt 
             console.log(typeof current_settings[property])
             switch(typeof current_settings[property]){
                 case 'number': prompt = number
                 case 'string': prompt = input
             }
-        
+            
             prompt({
                 message: `Enter new value for ${property}`,
-                default: `${current_settings[property]}` as never
+                default: current_settings[property] as never
             }).then((new_value:string|number)=>{
                 const num_value:number  = Number(new_value)
                 if(!isNaN(num_value)){
                     current_settings[property] = num_value
                 }else{
-                    current_settings[property] = new_value
+                    current_settings[property] = `${new_value}`
                 }
-                
-                
+
                 settingsUtil.saveSettings(current_settings)
         
                 console.log(chalk.green('settings updated!'))

@@ -1,0 +1,7 @@
+{
+  "scramble_length": 16,
+  "inspection_sec": 15,
+  "default_bpm": 60,
+  "default_metronome": "tick_low_soft.wav",
+  "sig_fig": 3
+}
