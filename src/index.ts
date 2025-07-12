@@ -14,7 +14,7 @@ import * as storage from "./util/storage"
 import  * as settingsUtil from "./util/settings"
 import {playAudioFile} from './util/sound'
 import {startLoader, endLoader} from './util/loading'
-
+import { plot, Plot } from 'nodeplotlib';
 import path from 'path'
 
 const readline = require('readline');
@@ -62,13 +62,14 @@ program
 program
     .command('graph')
     .argument('<property>','desired statistic to graph')
+    .option('-c, --console','Displays the graph in the console')
     .description(`generate a graph of one of the below stats: \n
     session_mean \n
     standard_deviation \n
     variance \n 
     fastest_solve \n
     slowest_solve`)
-    .action((property:string)=>{
+    .action((property:string,options:any)=>{
         const property_keys = ['fastest_solve','session_mean','standard_deviation','variance','slowest_solve','all'] as const;
         type propertyKey = typeof property_keys[number]
 
@@ -111,15 +112,9 @@ program
                         y:y_data,
                     }
                 }
-                
-                var blessed = require('blessed')
-                , contrib = require('blessed-contrib')
-                , screen = blessed.screen()
 
-
-                switch(normalized_property){
-                    case 'all':
-
+                function consoleGraph(prop:string){
+                    const allGraph = ()=>{
                         function randomColor() {
                             return [Math.random() * 255,Math.random()*255, Math.random()*255]
                           }
@@ -158,14 +153,8 @@ program
 
                         global_line.setData(global_data)
 
-                        screen.key(['escape', 'q', 'C-c'], function(ch, key) {
-                            return process.exit(0);
-                        });
-
-                        screen.render()
-                        
-                    break;
-                    default:
+                    }
+                    const defaultGraph = ()=>{
                         const line = contrib.line(
                             { style:
                               { line: "yellow"
@@ -177,14 +166,32 @@ program
                         let prop_data = retrieve_data(normalized_property as keyof session_statistics)
                         screen.append(line) //must append before setting data
                         line.setData([prop_data])
-                    
+
+                    }
+
+                    let resGraph = (graphFunc)=>{
+                        graphFunc()
+
                         screen.key(['escape', 'q', 'C-c'], function(ch, key) {
                             return process.exit(0);
                         });
-                   
+
                         screen.render()
-                    break;
+                    }
+                    return resGraph((prop === 'all')?allGraph:defaultGraph)
                 }
+
+                console.log(options)
+                if(options.console){
+                    var blessed = require('blessed')
+                    , contrib = require('blessed-contrib')
+                    , screen = blessed.screen()
+
+                    consoleGraph(normalized_property)
+                }else{
+                    console.log('WIP')
+                }
+
             }else{
                 console.log(`error: ` +chalk.red(`Session data.size === 0`))
             }

@@ -84,13 +84,14 @@ program
 program
     .command('graph')
     .argument('<property>', 'desired statistic to graph')
+    .option('-c, --console', 'Displays the graph in the console')
     .description(`generate a graph of one of the below stats: \n
     session_mean \n
     standard_deviation \n
     variance \n 
     fastest_solve \n
     slowest_solve`)
-    .action((property) => {
+    .action((property, options) => {
     const property_keys = ['fastest_solve', 'session_mean', 'standard_deviation', 'variance', 'slowest_solve', 'all'];
     function normalizeArg(arg) {
         const aliases = {
@@ -125,9 +126,8 @@ program
                     y: y_data,
                 };
             };
-            var blessed = require('blessed'), contrib = require('blessed-contrib'), screen = blessed.screen();
-            switch (normalized_property) {
-                case 'all':
+            function consoleGraph(prop) {
+                const allGraph = () => {
                     function randomColor() {
                         return [Math.random() * 255, Math.random() * 255, Math.random() * 255];
                     }
@@ -159,12 +159,8 @@ program
                         new_line(property);
                     });
                     global_line.setData(global_data);
-                    screen.key(['escape', 'q', 'C-c'], function (ch, key) {
-                        return process.exit(0);
-                    });
-                    screen.render();
-                    break;
-                default:
+                };
+                const defaultGraph = () => {
                     const line = contrib.line({ style: { line: "yellow",
                             text: "green",
                             baseline: "black" },
@@ -174,11 +170,23 @@ program
                     let prop_data = retrieve_data(normalized_property);
                     screen.append(line); //must append before setting data
                     line.setData([prop_data]);
+                };
+                let resGraph = (graphFunc) => {
+                    graphFunc();
                     screen.key(['escape', 'q', 'C-c'], function (ch, key) {
                         return process.exit(0);
                     });
                     screen.render();
-                    break;
+                };
+                return resGraph((prop === 'all') ? allGraph : defaultGraph);
+            }
+            console.log(options);
+            if (options.console) {
+                var blessed = require('blessed'), contrib = require('blessed-contrib'), screen = blessed.screen();
+                consoleGraph(normalized_property);
+            }
+            else {
+                console.log('WIP');
             }
         }
         else {
@@ -409,13 +417,12 @@ function updateSetting(current_settings, property) {
             });
             break;
         default:
-            let prompt = prompts_1.number;
-            /*
-            console.log(typeof current_settings[property])
-            switch(typeof current_settings[property]){
-                case 'number': prompt = number
-                case 'string': prompt = input
-            }*/
+            let prompt;
+            console.log(typeof current_settings[property]);
+            switch (typeof current_settings[property]) {
+                case 'number': prompt = prompts_1.number;
+                case 'string': prompt = prompts_1.input;
+            }
             prompt({
                 message: `Enter new value for ${property}`,
                 default: current_settings[property]
@@ -427,7 +434,6 @@ function updateSetting(current_settings, property) {
                 else {
                     current_settings[property] = `${new_value}`;
                 }
-                console.log(current_settings);
                 settingsUtil.saveSettings(current_settings);
                 console.log(chalk_1.default.green('settings updated!'));
                 console.table(current_settings);
