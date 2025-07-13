@@ -57,6 +57,7 @@ const storage = __importStar(require("./util/storage"));
 const settingsUtil = __importStar(require("./util/settings"));
 const sound_1 = require("./util/sound");
 const loading_1 = require("./util/loading");
+const nodeplotlib_1 = require("nodeplotlib");
 const path_1 = __importDefault(require("path"));
 const readline = require('readline');
 var Scrambow = require('scrambow').Scrambow;
@@ -117,13 +118,17 @@ program
                 .map((ISO_date) => {
                 return new Date(ISO_date);
             });
-            const retrieve_data = (property) => {
+            const retrieve_data = (property, console_option = true) => {
                 const y_data = x_dates.map((date) => {
                     return session_data.get(date.toISOString())[property];
                 });
-                return {
+                return console_option ? {
                     x: x_dates,
                     y: y_data,
+                } : {
+                    x: x_dates,
+                    y: y_data,
+                    type: 'scatter'
                 };
             };
             function consoleGraph(prop) {
@@ -180,13 +185,23 @@ program
                 };
                 return resGraph((prop === 'all') ? allGraph : defaultGraph);
             }
-            console.log(options);
             if (options.console) {
                 var blessed = require('blessed'), contrib = require('blessed-contrib'), screen = blessed.screen();
                 consoleGraph(normalized_property);
             }
             else {
-                console.log('WIP');
+                switch (normalized_property) {
+                    case 'all':
+                        const data = property_keys.map((property) => {
+                            const res = retrieve_data(property, false);
+                            return res;
+                        });
+                        (0, nodeplotlib_1.plot)(data);
+                        break;
+                    default:
+                        (0, nodeplotlib_1.plot)([retrieve_data(normalized_property, false)]);
+                        break;
+                }
             }
         }
         else {

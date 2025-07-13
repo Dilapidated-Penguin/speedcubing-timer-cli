@@ -46,6 +46,7 @@ import { clearInterval } from "timers";
 import { clear } from "console";
 import { randomInt } from "crypto";
 import { type } from "os";
+import { PlotData } from "plotly.js";
 
 const listener = new GlobalKeyboardListener();
 //*************************************************
@@ -102,14 +103,18 @@ program
                     .map((ISO_date)=>{
                         return new Date(ISO_date)
                     })
-                const retrieve_data = (property:propertyKey)=>{
+                const retrieve_data = (property:propertyKey,console_option:boolean = true)=>{
                     const y_data:number[] = x_dates.map((date:Date)=>{
                         return session_data.get(date.toISOString())[property]
                     })
                 
-                    return {
+                    return console_option ? {
                         x:x_dates,
                         y:y_data,
+                    } : {
+                        x:x_dates,
+                        y:y_data,
+                        type:'scatter'
                     }
                 }
 
@@ -188,7 +193,19 @@ program
 
                     consoleGraph(normalized_property)
                 }else{
-                    console.log('WIP')
+                    switch(normalized_property){
+                        case 'all':
+
+                            const data:Plot[] = property_keys.map((property:propertyKey)=>{
+                                const res =retrieve_data(property,false)
+                                return res as PlotData
+                            })
+                            plot(data)
+                        break;
+                        default:
+                            plot([retrieve_data(normalized_property as keyof session_statistics,false) as PlotData])
+                        break;
+                    }
                 }
 
             }else{
