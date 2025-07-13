@@ -117,7 +117,7 @@ program
                     const allGraph = ()=>{
                         function randomColor() {
                             return [Math.random() * 255,Math.random()*255, Math.random()*255]
-                          }
+                        }
                         const global_line = contrib.line(
                             { 
                             xLabelPadding: 3,
@@ -181,7 +181,6 @@ program
                     return resGraph((prop === 'all')?allGraph:defaultGraph)
                 }
 
-                console.log(options)
                 if(options.console){
                     var blessed = require('blessed')
                     , contrib = require('blessed-contrib')
