@@ -195,7 +195,6 @@ program
                 }else{
                     switch(normalized_property){
                         case 'all':
-
                             const data:Plot[] = property_keys.map((property:propertyKey)=>{
                                 const res =retrieve_data(property,false)
                                 return res as PlotData
@@ -339,7 +338,8 @@ program
 
 program
     .command("settings")
-    .argument("[property]","configure the cli to your liking")
+    .argument("[property]",'configure the cli to your liking')
+    .description('configure the cli to your liking')
     .action((setting_to_change:string | undefined)=>{
         let current_settings:settings = settingsUtil.loadSettings()
         

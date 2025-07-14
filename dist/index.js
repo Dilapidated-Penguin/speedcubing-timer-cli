@@ -319,7 +319,8 @@ program
 });
 program
     .command("settings")
-    .argument("[property]", "configure the cli to your liking")
+    .argument("[property]", 'configure the cli to your liking')
+    .description('configure the cli to your liking')
     .action((setting_to_change) => {
     let current_settings = settingsUtil.loadSettings();
     const settings_list = Object.keys(current_settings);
