@@ -14,7 +14,7 @@ import * as storage from "./util/storage"
 import  * as settingsUtil from "./util/settings"
 import {playAudioFile} from './util/sound'
 import {startLoader, endLoader} from './util/loading'
-import { plot, Plot } from 'nodeplotlib';
+import { plot, Plot,Layout } from 'nodeplotlib';
 import path from 'path'
 
 const readline = require('readline');
@@ -22,14 +22,14 @@ const readline = require('readline');
 var Scrambow = require('scrambow').Scrambow;
 const cfonts = require('cfonts');
 
-import {string as cli_title_string} from './cli-title.json'
+import * as title from './cli-title.json'
 
 const program = new Command();
 
 var saved_data = storage.loadData()
 
 //main_window_id
-let main_window_id:number | null = null
+const main_window_id:number = activeWindowSync().id
 //timer variables**********************************
 
 let timer_running:boolean = false
@@ -43,20 +43,26 @@ let solve_labelled:boolean = false
 import {GlobalKeyboardListener} from "@futpib/node-global-key-listener";
 
 import { clearInterval } from "timers";
-import { clear } from "console";
-import { randomInt } from "crypto";
-import { type } from "os";
 import { PlotData } from "plotly.js";
-
+import fs from 'fs'
 const listener = new GlobalKeyboardListener();
 //*************************************************
 
 //*************************************************
 
 
-console.log(cli_title_string)
+if(title.previous_window!==main_window_id){
+    console.log(title.string)
+    let res = JSON.parse(JSON.stringify(title))
+    res.previous_window = main_window_id
+
+    const title_path = path.join(__dirname, './cli-title.json');
+    fs.writeFileSync(title_path,JSON.stringify(res))
+}
+
+
 program
-    .version("1.0.38")
+    .version("1.0.39")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)")
 
 
@@ -501,7 +507,6 @@ function validEvent(event_to_check:string):boolean{
     return (events_list.indexOf(event_to_check) !== -1)
 }
 function startSession(event: string,options:any):void{
-    main_window_id = activeWindowSync().id
 
     console.clear()
     const session = Date.now()
@@ -885,7 +890,8 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                             letterSpacing: 1,           // define letter spacing
                         });
                         process.stdout.write("\b \b")
-                        console.log( chalk.bold(`Time: `) +  elapsedTime.toFixed(settingsUtil.loadSettings().sig_fig) + chalk.green('s') +
+                        const sig_fig:number = settingsUtil.loadSettings().sig_fig
+                        console.log( chalk.bold(`Time: `) +  elapsedTime.toFixed(sig_fig) + chalk.green('s') +
                         `\n`);
                         
                         console.log(chalk.bold(`Ao5: `)+ chalk.magenta(current_Ao5 ?? "--") + chalk.green(`s`))
@@ -896,7 +902,7 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                             //solves
                             console.table(createTable(current_session.entries.map((instance)=>{
                                 return {
-                                    time: instance.time.toFixed(settingsUtil.loadSettings().sig_fig),
+                                    time: instance.time.toFixed(sig_fig),
                                     label: instance.label ?? 'OK'
                                 }
                             }),['time','label']))
@@ -905,7 +911,7 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                                 const titles:string[] = ['average','std. dev.','variance','fastest','slowest']
                                 return Object.keys(current_stats)
                                     .map((stat_name:string,index:number)=>{
-                                        return `${titles[index]}: ${chalk.bold(current_stats[stat_name].toFixed(settingsUtil.loadSettings().sig_fig))}`
+                                        return `${titles[index]}: ${chalk.bold(current_stats[stat_name].toFixed(sig_fig))}`
                                     })
                                     .join(chalk.blue(` | `))
                             }

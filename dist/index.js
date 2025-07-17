@@ -62,11 +62,11 @@ const path_1 = __importDefault(require("path"));
 const readline = require('readline');
 var Scrambow = require('scrambow').Scrambow;
 const cfonts = require('cfonts');
-const cli_title_json_1 = require("./cli-title.json");
+const title = __importStar(require("./cli-title.json"));
 const program = new commander_1.Command();
 var saved_data = storage.loadData();
 //main_window_id
-let main_window_id = null;
+const main_window_id = (0, get_windows_1.activeWindowSync)().id;
 //timer variables**********************************
 let timer_running = false;
 let startTime = null;
@@ -75,12 +75,19 @@ let new_scramble = false;
 let solve_labelled = false;
 const node_global_key_listener_1 = require("@futpib/node-global-key-listener");
 const timers_1 = require("timers");
+const fs_1 = __importDefault(require("fs"));
 const listener = new node_global_key_listener_1.GlobalKeyboardListener();
 //*************************************************
 //*************************************************
-console.log(cli_title_json_1.string);
+if (title.previous_window !== main_window_id) {
+    console.log(title.string);
+    let res = JSON.parse(JSON.stringify(title));
+    res.previous_window = main_window_id;
+    const title_path = path_1.default.join(__dirname, './cli-title.json');
+    fs_1.default.writeFileSync(title_path, JSON.stringify(res));
+}
 program
-    .version("1.0.38")
+    .version("1.0.39")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)");
 program
     .command('graph')
@@ -461,7 +468,6 @@ function validEvent(event_to_check) {
     return (events_json_1.events_list.indexOf(event_to_check) !== -1);
 }
 function startSession(event, options) {
-    main_window_id = (0, get_windows_1.activeWindowSync)().id;
     console.clear();
     const session = Date.now();
     const session_date = new Date(session);
@@ -809,7 +815,8 @@ function newSolve(current_settings, event, session_date, option) {
                             letterSpacing: 1, // define letter spacing
                         });
                         process.stdout.write("\b \b");
-                        console.log(chalk_1.default.bold(`Time: `) + elapsedTime.toFixed(settingsUtil.loadSettings().sig_fig) + chalk_1.default.green('s') +
+                        const sig_fig = settingsUtil.loadSettings().sig_fig;
+                        console.log(chalk_1.default.bold(`Time: `) + elapsedTime.toFixed(sig_fig) + chalk_1.default.green('s') +
                             `\n`);
                         console.log(chalk_1.default.bold(`Ao5: `) + chalk_1.default.magenta(current_Ao5 !== null && current_Ao5 !== void 0 ? current_Ao5 : "--") + chalk_1.default.green(`s`));
                         console.log(chalk_1.default.bold(`Ao12: `) + chalk_1.default.magenta(current_Ao12 !== null && current_Ao12 !== void 0 ? current_Ao12 : "--") + chalk_1.default.green(`s`) +
@@ -819,7 +826,7 @@ function newSolve(current_settings, event, session_date, option) {
                             console.table((0, nice_table_1.createTable)(current_session.entries.map((instance) => {
                                 var _a;
                                 return {
-                                    time: instance.time.toFixed(settingsUtil.loadSettings().sig_fig),
+                                    time: instance.time.toFixed(sig_fig),
                                     label: (_a = instance.label) !== null && _a !== void 0 ? _a : 'OK'
                                 };
                             }), ['time', 'label']));
@@ -828,7 +835,7 @@ function newSolve(current_settings, event, session_date, option) {
                                 const titles = ['average', 'std. dev.', 'variance', 'fastest', 'slowest'];
                                 return Object.keys(current_stats)
                                     .map((stat_name, index) => {
-                                    return `${titles[index]}: ${chalk_1.default.bold(current_stats[stat_name].toFixed(settingsUtil.loadSettings().sig_fig))}`;
+                                    return `${titles[index]}: ${chalk_1.default.bold(current_stats[stat_name].toFixed(sig_fig))}`;
                                 })
                                     .join(chalk_1.default.blue(` | `));
                             };
