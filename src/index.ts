@@ -295,7 +295,7 @@ program
             if(validEvent(normalized_event)){
                 startSession(normalized_event,options)
             }else{
-                console.log(chalk.red(
+                console.error(chalk.red(
                     `${event} is not a valid/supported event`
                 ));
             }
@@ -308,7 +308,7 @@ program
             .then((event_choice:string)=>{
                 startSession(event_choice,options)
             }).catch((error)=>{
-                console.log(chalk.bgRed(`An error occurred`))
+                console.error(chalk.bgRed(`An error occurred`))
             })
         }
     })
@@ -329,11 +329,11 @@ program
         
         const bpm_number:number = Number(bpm)
         if(isNaN(bpm_number)){
-            console.log(chalk.red(bpm) + ` is not a number`)
+            console.error(chalk.red(bpm) + ` is not a number`)
             return 
         }
         if((bpm_number<3) || (bpm_number>180)){
-            console.log(`${chalk.red(bpm)}< 3bpm || ${chalk.red(bpm)}>180bpm`)
+            console.error(chalk.red('the bpm must be between 3 and 180 beats per minute'))
             return
         }
         console.log(`bpm: ` + chalk.bold(bpm))
@@ -364,7 +364,7 @@ program
             if(settings_list.indexOf(setting_to_change) !== -1){
                 updateSetting(current_settings,setting_to_change)
             }else{
-                console.log(chalk.red('Invalid argument:' + chalk.white('The argument is not a setting to change')))
+                console.error(chalk.red('Invalid argument:' + chalk.white('The argument is not a setting to change')))
             }
         }
 
@@ -445,7 +445,7 @@ program
                     break;
                 }
             }).catch((err)=>{
-                console.log(chalk.red(`An error has occurred:${err}`))
+                console.error(chalk.red(`An error has occurred:${err}`))
             })
         }
 
@@ -472,12 +472,11 @@ function updateSetting(current_settings:settings,property:string):void{
                 settingsUtil.saveSettings(current_settings)
                 console.log(chalk.green(`Metronome sound setting updated`))
             }).catch((err)=>{
-                console.log(err)
+                console.error(err)
             })
             break;
         default:
             let prompt 
-            console.log(typeof current_settings[property])
             switch(typeof current_settings[property]){
                 case 'number': prompt = number
                 case 'string': prompt = input
@@ -975,20 +974,20 @@ function stylizeScramble(scramble: string,r:number = 133,g:number = 18,b:number 
             complementary:[number,number,number],
             third_hue:[number,number,number],
             fourth_hue:[number,number,number],
-            tint:[number,number,number]
+            fifth_hue:[number,number,number]
         }
         const tetratic:palette = {
             complementary: [(h+180) %360,s,l],
             third_hue:[(h-90)%360,s,l],
             fourth_hue:[(h+270)%360,s,l],
-            tint:[h,s*0.8,Math.min(l*1.2,100)]
+            fifth_hue:[h,s*0.8,Math.min(l*1.2,100)]
         }
 
         const analogous:palette = {
             complementary: [(h+30) %360,s,l],
             third_hue:[(h-30)%360,s,l],
             fourth_hue:[(h+60)%360,s,l],
-            tint:[(h-60)%360,s,l]
+            fifth_hue:[(h-60)%360,s,l]
         }
         return tetratic
     }
@@ -1016,7 +1015,7 @@ function stylizeScramble(scramble: string,r:number = 133,g:number = 18,b:number 
         ];
       }
     const [h,s,l] = rgb_to_hsl(r,g,b)
-    const {complementary,fourth_hue,tint} = generate_hsl_palette(h,s,l)
+    const {complementary,fourth_hue,fifth_hue} = generate_hsl_palette(h,s,l)
     
     const colorMap: Record<string, (s: string) => string> = {
         'F': chalk.rgb(r,g,b).underline,
@@ -1026,7 +1025,7 @@ function stylizeScramble(scramble: string,r:number = 133,g:number = 18,b:number 
         'D': chalk.rgb(...hsl_to_rgb(...fourth_hue)),
         "'": chalk.whiteBright,
         " ":chalk.whiteBright,
-        '2': chalk.rgb(...hsl_to_rgb(...tint)),
+        '2': chalk.rgb(...hsl_to_rgb(...fifth_hue)),
     };
 
     const res = scramble

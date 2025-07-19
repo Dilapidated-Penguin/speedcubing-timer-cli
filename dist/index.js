@@ -284,7 +284,7 @@ program
             startSession(normalized_event, options);
         }
         else {
-            console.log(chalk_1.default.red(`${event} is not a valid/supported event`));
+            console.error(chalk_1.default.red(`${event} is not a valid/supported event`));
         }
     }
     else {
@@ -295,7 +295,7 @@ program
             .then((event_choice) => {
             startSession(event_choice, options);
         }).catch((error) => {
-            console.log(chalk_1.default.bgRed(`An error occurred`));
+            console.error(chalk_1.default.bgRed(`An error occurred`));
         });
     }
 });
@@ -313,11 +313,11 @@ program
     }
     const bpm_number = Number(bpm);
     if (isNaN(bpm_number)) {
-        console.log(chalk_1.default.red(bpm) + ` is not a number`);
+        console.error(chalk_1.default.red(bpm) + ` is not a number`);
         return;
     }
     if ((bpm_number < 3) || (bpm_number > 180)) {
-        console.log(`${chalk_1.default.red(bpm)}< 3bpm || ${chalk_1.default.red(bpm)}>180bpm`);
+        console.error(chalk_1.default.red('the bpm must be between 3 and 180 beats per minute'));
         return;
     }
     console.log(`bpm: ` + chalk_1.default.bold(bpm));
@@ -346,7 +346,7 @@ program
             updateSetting(current_settings, setting_to_change);
         }
         else {
-            console.log(chalk_1.default.red('Invalid argument:' + chalk_1.default.white('The argument is not a setting to change')));
+            console.error(chalk_1.default.red('Invalid argument:' + chalk_1.default.white('The argument is not a setting to change')));
         }
     }
 });
@@ -414,7 +414,7 @@ program
                     break;
             }
         }).catch((err) => {
-            console.log(chalk_1.default.red(`An error has occurred:${err}`));
+            console.error(chalk_1.default.red(`An error has occurred:${err}`));
         });
     }
     newChoices(0);
@@ -436,12 +436,11 @@ function updateSetting(current_settings, property) {
                 settingsUtil.saveSettings(current_settings);
                 console.log(chalk_1.default.green(`Metronome sound setting updated`));
             }).catch((err) => {
-                console.log(err);
+                console.error(err);
             });
             break;
         default:
             let prompt;
-            console.log(typeof current_settings[property]);
             switch (typeof current_settings[property]) {
                 case 'number': prompt = prompts_1.number;
                 case 'string': prompt = prompts_1.input;
@@ -895,13 +894,13 @@ function stylizeScramble(scramble, r = 133, g = 18, b = 0) {
             complementary: [(h + 180) % 360, s, l],
             third_hue: [(h - 90) % 360, s, l],
             fourth_hue: [(h + 270) % 360, s, l],
-            tint: [h, s * 0.8, Math.min(l * 1.2, 100)]
+            fifth_hue: [h, s * 0.8, Math.min(l * 1.2, 100)]
         };
         const analogous = {
             complementary: [(h + 30) % 360, s, l],
             third_hue: [(h - 30) % 360, s, l],
             fourth_hue: [(h + 60) % 360, s, l],
-            tint: [(h - 60) % 360, s, l]
+            fifth_hue: [(h - 60) % 360, s, l]
         };
         return tetratic;
     };
@@ -949,7 +948,7 @@ function stylizeScramble(scramble, r = 133, g = 18, b = 0) {
         ];
     }
     const [h, s, l] = rgb_to_hsl(r, g, b);
-    const { complementary, fourth_hue, tint } = generate_hsl_palette(h, s, l);
+    const { complementary, fourth_hue, fifth_hue } = generate_hsl_palette(h, s, l);
     const colorMap = {
         'F': chalk_1.default.rgb(r, g, b).underline,
         'R': chalk_1.default.rgb(...hsl_to_rgb(...complementary)),
@@ -958,7 +957,7 @@ function stylizeScramble(scramble, r = 133, g = 18, b = 0) {
         'D': chalk_1.default.rgb(...hsl_to_rgb(...fourth_hue)),
         "'": chalk_1.default.whiteBright,
         " ": chalk_1.default.whiteBright,
-        '2': chalk_1.default.rgb(...hsl_to_rgb(...tint)),
+        '2': chalk_1.default.rgb(...hsl_to_rgb(...fifth_hue)),
     };
     const res = scramble
         .trim()

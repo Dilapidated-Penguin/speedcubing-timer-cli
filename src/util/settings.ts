@@ -14,7 +14,8 @@ export function loadSettings():settings {
             inspection_sec: 15,
             default_bpm: "60",
             default_metronome:'tick.wav',
-            sig_fig:3
+            sig_fig:3,
+            scramble_colour_scheme:'analogous'
         }
     }else{
         const output: settings = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf-8'))

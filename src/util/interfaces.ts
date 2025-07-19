@@ -36,6 +36,7 @@ export interface settings {
     default_bpm:string;
     default_metronome:string;
     sig_fig:number;
+    scramble_colour_scheme:colour_scheme;
 }
-
+export type colour_scheme = 'analogous' | 'tetratic'
 export type event_types = 'pyraminx' | 'square1'|'megaminx' |'skewb'| number
