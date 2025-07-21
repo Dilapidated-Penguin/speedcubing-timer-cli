@@ -12,6 +12,7 @@ import { select,number, input} from '@inquirer/prompts';import { spawn } from 'c
 import {settings, sessionLog, session_statistics, SolveInstance} from "./util/interfaces"
 import * as storage from "./util/storage"
 import  * as settingsUtil from "./util/settings"
+import * as colour_palette from "./util/colourPalette"
 import {playAudioFile} from './util/sound'
 import {startLoader, endLoader} from './util/loading'
 import { plot, Plot,Layout } from 'nodeplotlib';
@@ -62,7 +63,7 @@ if(title.previous_window!==main_window_id){
 
 
 program
-    .version("1.0.39")
+    .version("1.0.40")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)")
 
 
@@ -528,7 +529,7 @@ function startSession(event: string,options:any):void{
     new_scramble = true
     listener.kill()
 
-    if (options.window || options.w) {
+    if (options.window) {
         const scriptPath = path.join(__dirname, 'window.js');
 
         const cmd = spawn('cmd.exe', ['/K', `start cmd /K node ${scriptPath} ${session_date.toISOString()}`], {
@@ -665,17 +666,16 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
 
     
     }
-    if(option.i || option.inspect){
+    if(option.inspect){
         inspection_time(current_settings.inspection_sec)
     }else{
         startListener(current_settings,event,session_date,option)
     }
     function startListener(current_settings:settings,event: string,session_date:Date,option:any){
-        const inspect:boolean = option.i || option.inspect
         const releasedState = ()=>{
             space_been_pressed = false
 
-            readline.moveCursor(process.stdout, 0,-(inspect ? 1:2));
+            readline.moveCursor(process.stdout, 0,-(option.inspect ? 1:2));
             readline.cursorTo(process.stdout, 0)
             readline.clearLine(process.stdout, 0)
             process.stdout.write(chalk.bgGreenBright('SOLVE') +
@@ -685,7 +685,7 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
             startTimer()
         }
     
-        if(inspect){
+        if(option.inspect){
             if(space_been_pressed){
                 releasedState()
             }
@@ -702,7 +702,6 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                         return
                     }
                     const selected_entry:SolveInstance = current_session.at(index_to_alter)
-                    
                     
                     console.log(Object.keys(selected_entry).map((key)=>{
                         return `${key}: ${chalk.green(selected_entry[key])}`
@@ -741,7 +740,7 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                     saved_data.data.set(date_ISO,current_session)
                     storage.saveData(saved_data)
                 }else{
-                    console.log(chalk.red(`There exist no entries in the current session to delete`))
+                    console.error(chalk.red(`There exist no entries in the current session to delete`))
                 }
             }
             const editEntry = (date_ISO:string,index_to_edit:number = null)=>{
@@ -967,30 +966,7 @@ function stylizeScramble(scramble: string,r:number = 133,g:number = 18,b:number 
       
         return [Math.round(h), +(s * 100).toFixed(1), +(l * 100).toFixed(1)];
       }
-      
-    const generate_hsl_palette = (h:number,s:number,l:number)=>{
-        //generates 5 colour pallete
-        interface palette {
-            complementary:[number,number,number],
-            third_hue:[number,number,number],
-            fourth_hue:[number,number,number],
-            fifth_hue:[number,number,number]
-        }
-        const tetratic:palette = {
-            complementary: [(h+180) %360,s,l],
-            third_hue:[(h-90)%360,s,l],
-            fourth_hue:[(h+270)%360,s,l],
-            fifth_hue:[h,s*0.8,Math.min(l*1.2,100)]
-        }
 
-        const analogous:palette = {
-            complementary: [(h+30) %360,s,l],
-            third_hue:[(h-30)%360,s,l],
-            fourth_hue:[(h+60)%360,s,l],
-            fifth_hue:[(h-60)%360,s,l]
-        }
-        return tetratic
-    }
     function hsl_to_rgb(h: number, s: number, l: number): [number, number, number] {
         s /= 100;
         l /= 100;
@@ -1015,7 +991,7 @@ function stylizeScramble(scramble: string,r:number = 133,g:number = 18,b:number 
         ];
       }
     const [h,s,l] = rgb_to_hsl(r,g,b)
-    const {complementary,fourth_hue,fifth_hue} = generate_hsl_palette(h,s,l)
+    const {complementary,fourth_hue,fifth_hue} = colour_palette.tetratic(h,s,l)
     
     const colorMap: Record<string, (s: string) => string> = {
         'F': chalk.rgb(r,g,b).underline,

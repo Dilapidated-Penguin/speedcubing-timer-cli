@@ -55,6 +55,7 @@ const prompts_1 = require("@inquirer/prompts");
 const child_process_1 = require("child_process");
 const storage = __importStar(require("./util/storage"));
 const settingsUtil = __importStar(require("./util/settings"));
+const colour_palette = __importStar(require("./util/colourPalette"));
 const sound_1 = require("./util/sound");
 const loading_1 = require("./util/loading");
 const nodeplotlib_1 = require("nodeplotlib");
@@ -87,7 +88,7 @@ if (title.previous_window !== main_window_id) {
     fs_1.default.writeFileSync(title_path, JSON.stringify(res));
 }
 program
-    .version("1.0.39")
+    .version("1.0.40")
     .description("fast and lightweight CLI timer for speedcubing. Cstimer in the command line (in progress)");
 program
     .command('graph')
@@ -484,7 +485,7 @@ function startSession(event, options) {
     storage.saveData(saved_data);
     new_scramble = true;
     listener.kill();
-    if (options.window || options.w) {
+    if (options.window) {
         const scriptPath = path_1.default.join(__dirname, 'window.js');
         const cmd = (0, child_process_1.spawn)('cmd.exe', ['/K', `start cmd /K node ${scriptPath} ${session_date.toISOString()}`], {
             detached: true,
@@ -599,17 +600,16 @@ function newSolve(current_settings, event, session_date, option) {
             }, 1000);
         }
     }
-    if (option.i || option.inspect) {
+    if (option.inspect) {
         inspection_time(current_settings.inspection_sec);
     }
     else {
         startListener(current_settings, event, session_date, option);
     }
     function startListener(current_settings, event, session_date, option) {
-        const inspect = option.i || option.inspect;
         const releasedState = () => {
             space_been_pressed = false;
-            readline.moveCursor(process.stdout, 0, -(inspect ? 1 : 2));
+            readline.moveCursor(process.stdout, 0, -(option.inspect ? 1 : 2));
             readline.cursorTo(process.stdout, 0);
             readline.clearLine(process.stdout, 0);
             process.stdout.write(chalk_1.default.bgGreenBright('SOLVE') +
@@ -617,7 +617,7 @@ function newSolve(current_settings, event, session_date, option) {
             readline.cursorTo(process.stdout, 0);
             startTimer();
         };
-        if (inspect) {
+        if (option.inspect) {
             if (space_been_pressed) {
                 releasedState();
             }
@@ -673,7 +673,7 @@ function newSolve(current_settings, event, session_date, option) {
                     storage.saveData(saved_data);
                 }
                 else {
-                    console.log(chalk_1.default.red(`There exist no entries in the current session to delete`));
+                    console.error(chalk_1.default.red(`There exist no entries in the current session to delete`));
                 }
             };
             const editEntry = (date_ISO, index_to_edit = null) => {
@@ -889,21 +889,6 @@ function stylizeScramble(scramble, r = 133, g = 18, b = 0) {
         }
         return [Math.round(h), +(s * 100).toFixed(1), +(l * 100).toFixed(1)];
     }
-    const generate_hsl_palette = (h, s, l) => {
-        const tetratic = {
-            complementary: [(h + 180) % 360, s, l],
-            third_hue: [(h - 90) % 360, s, l],
-            fourth_hue: [(h + 270) % 360, s, l],
-            fifth_hue: [h, s * 0.8, Math.min(l * 1.2, 100)]
-        };
-        const analogous = {
-            complementary: [(h + 30) % 360, s, l],
-            third_hue: [(h - 30) % 360, s, l],
-            fourth_hue: [(h + 60) % 360, s, l],
-            fifth_hue: [(h - 60) % 360, s, l]
-        };
-        return tetratic;
-    };
     function hsl_to_rgb(h, s, l) {
         s /= 100;
         l /= 100;
@@ -948,7 +933,7 @@ function stylizeScramble(scramble, r = 133, g = 18, b = 0) {
         ];
     }
     const [h, s, l] = rgb_to_hsl(r, g, b);
-    const { complementary, fourth_hue, fifth_hue } = generate_hsl_palette(h, s, l);
+    const { complementary, fourth_hue, fifth_hue } = colour_palette.tetratic(h, s, l);
     const colorMap = {
         'F': chalk_1.default.rgb(r, g, b).underline,
         'R': chalk_1.default.rgb(...hsl_to_rgb(...complementary)),
