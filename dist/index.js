@@ -817,10 +817,18 @@ function newSolve(current_settings, event, session_date, option) {
                         const sig_fig = settingsUtil.loadSettings().sig_fig;
                         console.log(chalk_1.default.bold(`Time: `) + elapsedTime.toFixed(sig_fig) + chalk_1.default.green('s') +
                             `\n`);
-                        console.log(chalk_1.default.bold(`Ao5: `) + chalk_1.default.magenta(current_Ao5 !== null && current_Ao5 !== void 0 ? current_Ao5 : "--") + chalk_1.default.green(`s`));
-                        console.log(chalk_1.default.bold(`Ao12: `) + chalk_1.default.magenta(current_Ao12 !== null && current_Ao12 !== void 0 ? current_Ao12 : "--") + chalk_1.default.green(`s`) +
+                        const round_average = (value) => {
+                            if (value === null) {
+                                return '--';
+                            }
+                            else {
+                                return value.toFixed(sig_fig);
+                            }
+                        };
+                        console.log(chalk_1.default.bold(`Ao5: `) + chalk_1.default.magenta(round_average(current_Ao5)) + chalk_1.default.green(`s`));
+                        console.log(chalk_1.default.bold(`Ao12: `) + chalk_1.default.magenta(round_average(current_Ao12)) + chalk_1.default.green(`s`) +
                             `\n \n`);
-                        if (!(option.focusMode || option.f) && !(option.w || option.window)) {
+                        if (!(option.focusMode) && !(option.window)) {
                             //solves
                             console.table((0, nice_table_1.createTable)(current_session.entries.map((instance) => {
                                 var _a;

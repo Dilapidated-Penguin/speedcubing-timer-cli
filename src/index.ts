@@ -891,12 +891,18 @@ function newSolve(current_settings:settings,event: string,session_date:Date,opti
                         const sig_fig:number = settingsUtil.loadSettings().sig_fig
                         console.log( chalk.bold(`Time: `) +  elapsedTime.toFixed(sig_fig) + chalk.green('s') +
                         `\n`);
-                        
-                        console.log(chalk.bold(`Ao5: `)+ chalk.magenta(current_Ao5 ?? "--") + chalk.green(`s`))
-                        console.log(chalk.bold(`Ao12: `)+ chalk.magenta(current_Ao12 ?? "--") + chalk.green(`s`) +
+                        const round_average = (value:number) =>{
+                            if(value  === null){
+                                return '--'
+                            }else{
+                                return value.toFixed(sig_fig)
+                            }
+                        }
+                        console.log(chalk.bold(`Ao5: `)+ chalk.magenta(round_average(current_Ao5)) + chalk.green(`s`))
+                        console.log(chalk.bold(`Ao12: `)+ chalk.magenta(round_average(current_Ao12)) + chalk.green(`s`) +
                         `\n \n`)
-    
-                        if(!(option.focusMode || option.f) && !(option.w || option.window)){
+
+                        if(!(option.focusMode) && !(option.window)){
                             //solves
                             console.table(createTable(current_session.entries.map((instance)=>{
                                 return {
